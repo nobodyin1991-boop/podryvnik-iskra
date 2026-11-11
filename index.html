@@ -101,8 +101,10 @@ button:focus-visible{outline:3px solid var(--teal); outline-offset:2px}
 .tag{align-self:flex-start; font-size:10px; font-weight:600; letter-spacing:.06em; text-transform:uppercase; background:var(--teal); color:#fffaf0; padding:1px 6px}
 .join,.invite{display:flex; gap:8px; align-items:stretch; flex-wrap:wrap; min-width:0}
 .invite{max-width:100%}
-.menu input{font:600 15px var(--body); color:var(--ink); background:#fffaf0; border:3px solid var(--ink); border-radius:4px; padding:8px 10px; min-width:0}
-.menu input:focus-visible{outline:3px solid var(--teal); outline-offset:2px}
+.code{font-family:var(--display); font-weight:400; font-size:22px; letter-spacing:.16em; background:var(--mustard); padding:0 8px}
+.sheet .invite .btn.primary{font-size:14px; padding:11px 16px}
+.menu input,.sheet input{font:600 15px var(--body); color:var(--ink); background:#fffaf0; border:3px solid var(--ink); border-radius:4px; padding:8px 10px; min-width:0}
+.menu input:focus-visible,.sheet input:focus-visible{outline:3px solid var(--teal); outline-offset:2px}
 #joinCode{width:96px; text-transform:uppercase; letter-spacing:.14em; text-align:center}
 #duelUrl{flex:1 1 220px; font-weight:400; font-size:13px}
 .status{margin:0; align-self:flex-start; font-weight:600; background:var(--ink); color:var(--paper); padding:4px 10px}
@@ -189,14 +191,10 @@ body.touch.menu-open .controls{display:none}
         <p class="lead">Карта вдвое больше во все стороны. Вы стартуете в противоположных углах, под ящиками лежат бомбы, дальность и по одному детонатору на половину карты. По карте бродят слизни, жуки и волчки. Побеждает тот, кто подорвёт соперника.</p>
         <div class="row">
           <button class="btn" id="bHost" type="button">Создать дуэль</button>
-          <span class="join"><input id="joinCode" type="text" inputmode="latin" autocomplete="off" autocapitalize="characters" maxlength="5" placeholder="КОД" aria-label="Код комнаты"><button class="btn" id="bJoin" type="button">Войти по коду</button></span>
-        </div>
-        <div class="invite" id="duelInvite" hidden>
-          <input id="duelUrl" type="text" readonly aria-label="Ссылка-приглашение">
-          <button class="btn" id="bCopy" type="button">Скопировать ссылку</button>
+          <span class="join" id="joinBox"><input id="joinCode" type="text" inputmode="latin" autocomplete="off" autocapitalize="characters" maxlength="5" placeholder="КОД" aria-label="Код комнаты"><button class="btn" id="bJoin" type="button">Войти по коду</button></span>
         </div>
         <p class="status" id="duelStatus" hidden></p>
-        <p class="dim" id="duelWhere">Один создаёт дуэль и отправляет ссылку, второй её открывает. Хосту нельзя сворачивать страницу: игра идёт на его устройстве.</p>
+        <p class="dim" id="duelWhere">Первый нажимает «Создать дуэль»: он сразу попадает на карту, игра стоит на паузе и показывает ссылку. Второй открывает ссылку или вводит код, и пауза снимается. Первому нельзя сворачивать страницу: игра идёт на его устройстве.</p>
       </div>
 
       <div class="block">
@@ -245,6 +243,20 @@ body.touch.menu-open .controls{display:none}
         <button class="btn primary" id="bRetry" type="button">С первого отсека</button>
         <button class="btn" id="bMenu1" type="button">В меню</button>
       </div>
+    </div>
+  </section>
+
+  <section class="overlay" id="oWait" hidden>
+    <div class="sheet">
+      <h2>Ждём второго игрока</h2>
+      <p>Ты уже на карте, игра на паузе. Отправь ссылку второму: как только он её откроет, пауза снимется сама.</p>
+      <div class="invite" id="duelInvite">
+        <input id="duelUrl" type="text" readonly aria-label="Ссылка-приглашение">
+        <button class="btn primary" id="bCopy" type="button">Скопировать ссылку</button>
+      </div>
+      <p>Или пусть введёт код в меню игры: <b class="code" id="waitCode"></b></p>
+      <p class="status" id="waitStatus" hidden></p>
+      <div class="row"><button class="btn" id="bCancelWait" type="button">Отменить и выйти в меню</button></div>
     </div>
   </section>
 
@@ -472,8 +484,16 @@ function duelBegin(sub) {
   V.on = true; V.lastRx = Date.now(); G.mode = 'play'; G.paused = false; G.score = 0; G.bombsMax = 1; G.range = 1; G.det = false;
   clearTimeout(V.timer); showOnly(null); ensureTiles(); snapCam(); showBanner('Дуэль', sub, 2.6);
 }
+/* the host steps onto the map at once; everything stands still until the second player arrives */
+function hostWait() {
+  genDuel(); V.on = true; V.rp = null;
+  G.player = newPlayer(1.5, 1.5, false); G.score = 0; G.bombsMax = 1; G.range = 1; G.det = false;
+  G.mode = 'wait'; G.paused = false; ensureTiles(); snapCam(); hideBanner();
+  $('waitCode').textContent = V.code; $('bCopy').textContent = 'Скопировать ссылку'; $('duelInvite').hidden = false;
+  showOnly('oWait');
+}
 function duelStartHost() {
-  genDuel();
+  if (G.mode !== 'wait') genDuel();          // a rematch gets a fresh map; the first round uses the one the host is waiting on
   G.player = newPlayer(1.5, 1.5, false); V.rp = newPlayer(COLS - 1.5, ROWS - 1.5, true);
   netSend({ t: 'start', cols: COLS, rows: ROWS, level: G.level, time: G.time, grid: Array.from(G.grid.subarray(0, N)) });
   duelBegin('Ты красная Искра, левый верхний угол');
@@ -620,11 +640,12 @@ function onData(d) {
 function onDrop() {
   const c = V.conn; if (!c) return; V.conn = null;
   try { c.close(); } catch (e) { /* already closed */ }
+  if (G.mode === 'wait') { clearTimeout(V.timer); netStatus('Второй игрок отключился. Комната ещё открыта, ждём снова.'); return; }
   if (V.on) {
     G.mode = 'over'; stickEnd();
     $('duelTitle').textContent = 'Связь оборвалась'; $('duelText').textContent = 'Соперник вышел или пропал интернет.'; $('bAgain').hidden = true;
     showOnly('oDuel');
-  } else netStatus('Соперник отключился.');
+  } else netStatus(V.role === 'guest' ? 'Хост закрыл комнату. Попроси его создать дуэль заново и прислать новую ссылку.' : 'Второй игрок отключился. Комната ' + V.code + ' ещё открыта.');
 }
 function leaveDuel() {
   clearTimeout(V.timer); netSend({ t: 'bye' });
@@ -633,10 +654,10 @@ function leaveDuel() {
   try { if (pr) pr.destroy(); } catch (e) { /* already closed */ }
   COLS = COLS_BASE; ROWS = ROWS_BASE; N = COLS * ROWS; G.grid.fill(EMPTY); clearField(); G.bombsMax = 1; G.range = 1; G.det = false; G.score = 0;
   G.player = { x: 1.5, y: 1.5, dir: 2, travel: 2, moving: false, anim: 0, inv: 0, dead: 0 };
-  $('duelInvite').hidden = true; netStatus('');
+  netStatus('');
 }
 /* --- lobby --- */
-function netStatus(t) { $('duelStatus').textContent = t; $('duelStatus').hidden = !t; }
+function netStatus(t) { for (const id of ['duelStatus', 'waitStatus']) { $(id).textContent = t; $(id).hidden = !t; } }
 function loadPeer(cb) {
   if (window.Peer) { cb(); return; }
   const s = document.createElement('script'); s.src = 'https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js';
@@ -654,18 +675,26 @@ function netError(err) {
 }
 function wire(c) { c.on('data', onData); c.on('close', onDrop); c.on('error', onDrop); }
 function hostDuel() {
-  ac(); if (V.peer) leaveDuel();
+  ac();
+  if (V.peer) leaveDuel();
   V.role = 'host'; netStatus('Создаём комнату…');
   loadPeer(() => {
     const abc = 'ABCDEFGHJKLMNPQRSTUVWXYZ'; V.code = ''; for (let i = 0; i < 5; i++) V.code += abc[ri(abc.length)];
     let peer; try { peer = V.peer = new window.Peer('iskra-duel-' + V.code); } catch (e) { netFail(); return; }
     peer.on('open', () => {
       $('duelUrl').value = location.href.split('#')[0] + '#duel-' + V.code; $('duelInvite').hidden = false;
-      netStatus('Комната ' + V.code + ' открыта. Отправь ссылку второму игроку и не сворачивай страницу.');
+      hostWait(); netStatus('Комната ' + V.code + ' открыта.');
     });
     peer.on('connection', c => {
       if (V.conn) { try { c.close(); } catch (e) { /* ignore */ } return; }   // the room holds two
       V.conn = c; wire(c); c.on('open', duelStartHost);
+      netStatus('Второй игрок нашёл комнату, соединяемся…');
+      clearTimeout(V.timer);
+      V.timer = setTimeout(() => {   // signalling worked but the direct link did not come up
+        if (V.on || V.conn !== c) return;
+        V.conn = null; try { c.close(); } catch (e) { /* ignore */ }
+        netStatus('Прямое соединение не установилось: сеть одного из вас его не пропускает. Попробуйте оба через один Wi-Fi или оба через мобильный интернет. Комната ещё открыта.');
+      }, 20000);
     });
     peer.on('error', netError);
   });
@@ -673,6 +702,7 @@ function hostDuel() {
 function joinDuel(raw) {
   const code = String(raw || '').toUpperCase().replace(/[^A-Z]/g, '').slice(0, 5);
   if (code.length < 5) { netStatus('В коде пять букв.'); return; }
+  if (V.role === 'host' && V.peer) { netStatus('Ты уже создал комнату ' + V.code + '. Код вводит только второй игрок, а ты просто жди на этой странице.'); return; }
   ac(); if (V.peer) leaveDuel();
   V.role = 'guest'; netStatus('Подключаемся к комнате ' + code + '…');
   loadPeer(() => {
@@ -680,9 +710,10 @@ function joinDuel(raw) {
     peer.on('open', () => {
       const c = V.conn = peer.connect('iskra-duel-' + code, { reliable: true, serialization: 'json' });
       wire(c); c.on('open', () => netStatus('Подключено. Ждём старта…'));
+      netStatus('Ищем комнату ' + code + ' и соединяемся…');
     });
     peer.on('error', netError);
-    V.timer = setTimeout(() => { if (!V.on && V.role === 'guest') netStatus('Не получилось подключиться. Проверь код или попроси новую ссылку.'); }, 15000);
+    V.timer = setTimeout(() => { if (!V.on && V.role === 'guest') netStatus('Не получилось соединиться за 20 секунд. Если хост не закрывал страницу, значит сеть одного из вас не пропускает прямое соединение: попробуйте оба через один Wi-Fi или оба через мобильный интернет.'); }, 20000);
   });
 }
 
@@ -932,7 +963,7 @@ function updEnemy(e, dt) {
 /* ---------- update ---------- */
 function update(dt) {
   G.t += dt;
-  if (G.mode === 'menu' || G.mode === 'over' || G.mode === 'win') return;
+  if (G.mode === 'menu' || G.mode === 'over' || G.mode === 'win' || G.mode === 'wait') return;
   G.shake = Math.max(0, G.shake - dt * 2.5);
   for (const pt of G.parts) { pt.life -= dt; pt.x += pt.vx * dt; pt.y += pt.vy * dt; pt.vy += 6 * dt; pt.rot += pt.vr * dt; }
   G.parts = G.parts.filter(pt => pt.life > 0);
@@ -1079,7 +1110,7 @@ function togglePause() {
 }
 
 /* ---------- overlays, menu, hud ---------- */
-const OVERLAYS = ['oMenu', 'oPause', 'oOver', 'oWin', 'oDuel'];
+const OVERLAYS = ['oMenu', 'oPause', 'oOver', 'oWin', 'oDuel', 'oWait'];
 function showOnly(id) { for (const o of OVERLAYS) $(o).hidden = o !== id; document.body.classList.toggle('menu-open', !!id); }
 let banTimer = 0;
 function showBanner(t, s, sec) { $('banT').textContent = t; $('banS').textContent = s || ''; $('banS').hidden = !s; $('banner').classList.add('show'); clearTimeout(banTimer); banTimer = setTimeout(hideBanner, sec * 1000); }
@@ -1127,6 +1158,7 @@ $('bRetry').addEventListener('click', continueRun);
 $('bMenu1').addEventListener('click', toMenu);
 $('bMenu2').addEventListener('click', toMenu);
 $('bMenu3').addEventListener('click', toMenu);
+$('bCancelWait').addEventListener('click', toMenu);
 $('bHost').addEventListener('click', hostDuel);
 $('bJoin').addEventListener('click', () => joinDuel($('joinCode').value));
 $('joinCode').addEventListener('keydown', ev => { ev.stopPropagation(); if (ev.key === 'Enter') joinDuel($('joinCode').value); });
