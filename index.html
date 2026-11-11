@@ -469,7 +469,7 @@ function genDuel() {
   G.level = pick([1, 6, 11, 16, 21, 26]); G.time = DUEL_TIME; G.timeUp = true; G.shake = 0;
 }
 function duelBegin(sub) {
-  V.on = true; G.mode = 'play'; G.paused = false; G.score = 0; G.bombsMax = 1; G.range = 1; G.det = false;
+  V.on = true; V.lastRx = Date.now(); G.mode = 'play'; G.paused = false; G.score = 0; G.bombsMax = 1; G.range = 1; G.det = false;
   clearTimeout(V.timer); showOnly(null); ensureTiles(); snapCam(); showBanner('Дуэль', sub, 2.6);
 }
 function duelStartHost() {
@@ -559,6 +559,8 @@ function guestWorld(dt) {
 function duelUpdate(dt) {
   const p = G.player, rp = V.rp, host = V.role === 'host';
   if (G.mode !== 'play' || !rp) return;
+  // both sides talk 20 times a second; ten silent seconds means the other one is gone
+  if (Date.now() - V.lastRx > 10000) { onDrop(); return; }
   if (host) worldStep(dt); else guestWorld(dt);
   if (!p.dead) moveLocal(dt); else p.dead = Math.max(.001, p.dead - dt);
   rp.inv = Math.max(0, rp.inv - dt); if (rp.dead) rp.dead = Math.max(.001, rp.dead - dt);
@@ -601,6 +603,8 @@ function remoteBomb() {
 }
 function onData(d) {
   if (!d || typeof d !== 'object') return;
+  V.lastRx = Date.now();
+  if (d.t === 'bye') { onDrop(); return; }
   if (V.role === 'host') {
     const rp = V.rp;
     if (d.t === 'p' && rp && !rp.dead && isFinite(d.x) && isFinite(d.y)) { rp.nx = Math.max(1, Math.min(COLS - 1, +d.x)); rp.ny = Math.max(1, Math.min(ROWS - 1, +d.y)); rp.dir = d.d | 0; rp.moving = !!d.m; }
@@ -614,7 +618,8 @@ function onData(d) {
   }
 }
 function onDrop() {
-  if (!V.conn) return; V.conn = null;
+  const c = V.conn; if (!c) return; V.conn = null;
+  try { c.close(); } catch (e) { /* already closed */ }
   if (V.on) {
     G.mode = 'over'; stickEnd();
     $('duelTitle').textContent = 'Связь оборвалась'; $('duelText').textContent = 'Соперник вышел или пропал интернет.'; $('bAgain').hidden = true;
@@ -622,7 +627,7 @@ function onDrop() {
   } else netStatus('Соперник отключился.');
 }
 function leaveDuel() {
-  clearTimeout(V.timer);
+  clearTimeout(V.timer); netSend({ t: 'bye' });
   const c = V.conn, pr = V.peer; V.conn = null; V.peer = null; V.on = false; V.role = null; V.rp = null; V.items = [];
   try { if (c) c.close(); } catch (e) { /* already closed */ }
   try { if (pr) pr.destroy(); } catch (e) { /* already closed */ }
@@ -1503,6 +1508,7 @@ refreshMenu(); resize();
 if (window.ResizeObserver) new ResizeObserver(resize).observe(stage); else window.addEventListener('resize', resize);
 requestAnimationFrame(frame);
 window.__iskra = G;
+window.addEventListener('pagehide', () => { if (V.conn) netSend({ t: 'bye' }); });
 (function duelBoot() {
   const here = /github\.io$|^localhost$|^127\.0\.0\.1$/.test(location.hostname);
   if (!here && PAGES_URL.indexOf('http') === 0) {
