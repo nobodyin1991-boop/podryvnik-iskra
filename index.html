@@ -99,6 +99,10 @@ button:focus-visible{outline:3px solid var(--teal); outline-offset:2px}
 .pips{display:flex; gap:3px; align-items:center; font-size:10px; font-weight:600; letter-spacing:.08em; text-transform:uppercase; color:var(--muted)}
 .pips i{width:9px; height:9px; border:2px solid var(--ink); border-radius:50%} .pips i.f{background:var(--red)}
 .tag{align-self:flex-start; font-size:10px; font-weight:600; letter-spacing:.06em; text-transform:uppercase; background:var(--teal); color:#fffaf0; padding:1px 6px}
+.seg{display:inline-flex; border:3px solid var(--ink); border-radius:4px; box-shadow:4px 4px 0 var(--ink); overflow:hidden; max-width:100%}
+.segb{border:0; background:#fffaf0; padding:10px 14px; font-weight:600; font-size:14px; min-width:0}
+.segb + .segb{border-left:3px solid var(--ink)}
+.segb[aria-pressed="true"]{background:var(--ink); color:var(--paper)}
 .join,.invite{display:flex; gap:8px; align-items:stretch; flex-wrap:wrap; min-width:0}
 .invite{max-width:100%}
 .code{font-family:var(--display); font-weight:400; font-size:22px; letter-spacing:.16em; background:var(--mustard); padding:0 8px}
@@ -188,13 +192,19 @@ body.touch.menu-open .controls{display:none}
 
       <div class="block" id="duelBlock">
         <h3>Дуэль вдвоём</h3>
-        <p class="lead">Карта вдвое больше во все стороны. Вы стартуете в противоположных углах, под ящиками лежат бомбы, дальность и по одному детонатору на половину карты. По карте бродят слизни, жуки и волчки. Побеждает тот, кто подорвёт соперника.</p>
+        <p class="lead">Матч до трёх побед. Вы стартуете в противоположных углах, под ящиками лежат бомбы, дальность и по одному детонатору на половину карты. По карте бродят слизни, жуки и волчки. Раунд берёт тот, кто подорвёт соперника; каждый раунд на новой карте.</p>
+        <div class="row">
+          <span class="seg" role="group" aria-label="Размер карты">
+            <button class="segb" id="mapStd" type="button" aria-pressed="true">Обычная карта</button>
+            <button class="segb" id="mapWide" type="button" aria-pressed="false">Широкая, в 1,5 раза</button>
+          </span>
+        </div>
         <div class="row">
           <button class="btn" id="bHost" type="button">Создать дуэль</button>
           <span class="join" id="joinBox"><input id="joinCode" type="text" inputmode="latin" autocomplete="off" autocapitalize="characters" maxlength="5" placeholder="КОД" aria-label="Код комнаты"><button class="btn" id="bJoin" type="button">Войти по коду</button></span>
         </div>
         <p class="status" id="duelStatus" hidden></p>
-        <p class="dim" id="duelWhere">Первый нажимает «Создать дуэль»: он сразу попадает на карту, игра стоит на паузе и показывает ссылку. Второй открывает ссылку или вводит код, и пауза снимается. Первому нельзя сворачивать страницу: игра идёт на его устройстве.</p>
+        <p class="dim" id="duelWhere">Карту выбирает тот, кто создаёт дуэль. Он сразу попадает на карту, игра стоит на паузе и показывает ссылку. Второй открывает ссылку или вводит код, и пауза снимается. Первому нельзя сворачивать страницу: игра идёт на его устройстве.</p>
       </div>
 
       <div class="block">
@@ -291,7 +301,7 @@ body.touch.menu-open .controls{display:none}
 <script>
 (() => {
 'use strict';
-const ROWS_BASE = 13, MAXL = 30, COLS_BASE = 23, COLS_WIDE = 35, WIDE_FROM = 16, DUEL_COLS = 47, DUEL_ROWS = 27, MAXN = DUEL_COLS * DUEL_ROWS, TAU = Math.PI * 2;
+const ROWS_BASE = 13, MAXL = 30, COLS_BASE = 23, COLS_WIDE = 35, WIDE_FROM = 16, MAXN = COLS_WIDE * ROWS_BASE, TAU = Math.PI * 2;
 let COLS = COLS_BASE, ROWS = ROWS_BASE, N = COLS * ROWS;   // compartments from WIDE_FROM on are half as wide again
 const EMPTY = 0, HARD = 1, SOFT = 2;
 const DX = [0, 1, 0, -1], DY = [-1, 0, 1, 0];
@@ -436,8 +446,8 @@ function genLevel(L) {
 /* ---------- duel over the network ----------
    One browser hosts: it owns the map, the bombs, the fire and the tenants. Each player moves their own Искра
    locally (so steering stays instant) and reports the position; the host decides who picked what up and who got hit. */
-const DUEL_TIME = 360, PAGES_URL = 'https://nobodyin1991-boop.github.io/podryvnik-iskra/';
-const V = { on: false, role: null, peer: null, conn: null, items: [], rp: null, ev: [], sendT: 0, ending: false, endT: 0, eid: 1, code: '', timer: 0 };
+const DUEL_WINS = 3, PAGES_URL = 'https://nobodyin1991-boop.github.io/podryvnik-iskra/';
+const V = { score: [0, 0], round: 1, wide: !!save.duelWide, nextT: 0, startAt: 0, on: false, role: null, peer: null, conn: null, items: [], rp: null, ev: [], sendT: 0, ending: false, endT: 0, eid: 1, code: '', timer: 0 };
 const r3 = v => Math.round(v * 1000) / 1000;
 function newPlayer(x, y, alt) { return { x, y, nx: x, ny: y, dir: 2, travel: 2, moving: false, anim: 0, inv: 2.5, dead: 0, alt, bombsMax: 1, range: 1, det: false }; }
 function logicalPos(pl) { return pl === V.rp ? [pl.nx, pl.ny] : [pl.x, pl.y]; }
@@ -457,8 +467,9 @@ function netSend(o) {
 }
 function clearField() { G.bombs = []; G.blasts = []; G.enemies = []; G.parts = []; G.pops = []; G.spawns = []; G.burn.fill(0); G.flame.fill(0); G.door = { k: -1, revealed: false, wasOpen: false }; G.item = { k: -1, type: 'bomb', revealed: false, taken: true }; V.ev = []; V.ending = false; V.endT = 0; V.sendT = 0; }
 function genDuel() {
-  COLS = DUEL_COLS; ROWS = DUEL_ROWS; N = COLS * ROWS;
+  COLS = V.wide ? COLS_WIDE : COLS_BASE; ROWS = ROWS_BASE; N = COLS * ROWS;
   const g = G.grid; g.fill(EMPTY); clearField();
+  const per = V.wide ? 5 : 4, loot = [...Array(per).fill('range'), ...Array(per).fill('bomb'), 'det'];
   for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++)
     if (x === 0 || y === 0 || x === COLS - 1 || y === ROWS - 1 || (x % 2 === 0 && y % 2 === 0)) g[idx(x, y)] = HARD;
   const d0 = k => (k % COLS - 1) + (Math.floor(k / COLS) - 1), d1 = k => (COLS - 2 - k % COLS) + (ROWS - 2 - Math.floor(k / COLS));
@@ -472,21 +483,21 @@ function genDuel() {
   V.items = [];
   for (const list of halves) {
     list.sort(() => rnd() - .5);
-    ['range', 'range', 'range', 'range', 'range', 'range', 'bomb', 'bomb', 'bomb', 'bomb', 'bomb', 'bomb', 'det'].forEach((type, i) => { if (list[i] !== undefined) V.items.push({ k: list[i], type, revealed: false, taken: false }); });
+    loot.forEach((type, i) => { if (list[i] !== undefined) V.items.push({ k: list[i], type, revealed: false, taken: false }); });
   }
   const empties = [];
-  for (let y = 1; y < ROWS - 1; y++) for (let x = 1; x < COLS - 1; x++) { const k = idx(x, y); if (g[k] === EMPTY && d0(k) >= 8 && d1(k) >= 8) empties.push(k); }
-  for (const type of [1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3]) {
+  for (let y = 1; y < ROWS - 1; y++) for (let x = 1; x < COLS - 1; x++) { const k = idx(x, y); if (g[k] === EMPTY && d0(k) >= 6 && d1(k) >= 6) empties.push(k); }
+  for (const type of (V.wide ? [1, 1, 1, 2, 2, 3, 3] : [1, 1, 2, 2, 3])) {
     if (!empties.length) break;
     const k = empties.splice(ri(empties.length), 1)[0];
     spawnEnemy(type, k % COLS, Math.floor(k / COLS));
   }
   for (const e of G.enemies) e.id = V.eid++;
-  G.level = pick([1, 6, 11, 16, 21, 26]); G.time = DUEL_TIME; G.timeUp = true; G.shake = 0;
+  G.level = pick([1, 6, 11, 16, 21, 26]); G.time = V.wide ? 300 : 240; G.timeUp = true; G.shake = 0;
 }
 function duelBegin(sub) {
   V.on = true; V.lastRx = Date.now(); G.mode = 'play'; G.paused = false; G.score = 0; G.bombsMax = 1; G.range = 1; G.det = false;
-  clearTimeout(V.timer); showOnly(null); ensureTiles(); snapCam(); showBanner('Дуэль', sub, 2.6);
+  clearTimeout(V.timer); showOnly(null); ensureTiles(); snapCam(); showBanner('Раунд ' + V.round, sub, 2.6);
 }
 /* the host steps onto the map at once; everything stands still until the second player arrives */
 function hostWait() {
@@ -496,21 +507,26 @@ function hostWait() {
   $('waitCode').textContent = V.code; $('bCopy').textContent = 'Скопировать ссылку'; $('duelInvite').hidden = false;
   showOnly('oWait');
 }
-function duelStartHost() {
-  if (G.mode !== 'wait') genDuel();          // a rematch gets a fresh map; the first round uses the one the host is waiting on
+const scoreText = () => { const m = V.role === 'host' ? 0 : 1; return V.score[m] + ':' + V.score[1 - m]; };   // mine first
+function duelStartHost(keepScore) {
+  if (G.mode !== 'wait') genDuel();          // every round gets a fresh map; the very first one uses the map the host waited on
+  if (keepScore === true) V.round++; else { V.score = [0, 0]; V.round = 1; }
   G.player = newPlayer(1.5, 1.5, false); V.rp = newPlayer(COLS - 1.5, ROWS - 1.5, true);
-  V.syncN = 30; V.startMsg = { t: 'start', cols: COLS, rows: ROWS, level: G.level, time: G.time, grid: Array.from(G.grid.subarray(0, N)) };
+  V.syncN = 30; V.startAt = Date.now();
+  V.startMsg = { t: 'start', cols: COLS, rows: ROWS, level: G.level, time: G.time, sc: V.score, rd: V.round, grid: Array.from(G.grid.subarray(0, N)) };
   netSend(V.startMsg);
-  duelBegin('Ты красная Искра, левый верхний угол');
+  duelBegin(V.round === 1 ? 'Ты красная Искра, слева вверху. Игра до ' + DUEL_WINS + ' побед' : 'Счёт ' + scoreText());
 }
 function duelStartGuest(d) {
   clearInterval(V.helloT);
+  if (!d.grid || !(d.cols * d.rows <= MAXN)) return;
   COLS = d.cols; ROWS = d.rows; N = COLS * ROWS;
   G.grid.fill(EMPTY); clearField(); V.items = [];
   for (let k = 0; k < N; k++) G.grid[k] = d.grid[k];
   G.level = d.level; G.time = d.time; G.timeUp = true; G.shake = 0;
+  V.score = Array.isArray(d.sc) ? [d.sc[0] | 0, d.sc[1] | 0] : [0, 0]; V.round = d.rd | 0 || 1;
   G.player = newPlayer(COLS - 1.5, ROWS - 1.5, true); V.rp = newPlayer(1.5, 1.5, false);
-  duelBegin('Ты бирюзовая Искра, правый нижний угол');
+  duelBegin(V.round === 1 ? 'Ты бирюзовая Искра, справа внизу. Игра до ' + DUEL_WINS + ' побед' : 'Счёт ' + scoreText());
 }
 function deathFx(x, y, mine) { for (let i = 0; i < 24; i++) confetti(x, y, pick([TEAL, CREAM, MUSTARD, RED]), 4); sfx.die(); if (mine) { buzz(120); stickEnd(); } }
 function itemFx(pl, type, mine) {
@@ -591,6 +607,7 @@ function guestWorld(dt) {
 }
 function duelUpdate(dt) {
   const p = G.player, rp = V.rp, host = V.role === 'host';
+  if (G.mode === 'between') { if (host) { V.nextT -= dt; if (V.nextT <= 0) duelStartHost(true); } return; }
   if (G.mode !== 'play' || !rp) return;
   // both sides talk 20 times a second; ten silent seconds means the other one is gone
   if (Date.now() - V.lastRx > 10000) { onDrop(); return; }
@@ -618,14 +635,25 @@ function duelUpdate(dt) {
   V.sendT -= dt;
   if (V.sendT <= 0) { V.sendT = .066; if (host) sendSnapshot(); else netSend({ t: 'p', x: r3(p.x), y: r3(p.y), d: p.dir, m: p.moving ? 1 : 0 }); }
 }
-function duelFinish(res) { sendSnapshot(); netSend({ t: 'end', r: res }); duelResult(res); }
-function duelResult(res) {
-  G.mode = 'over'; stickEnd(); held.length = 0;
-  const won = res === V.role;
-  $('duelTitle').textContent = res === 'draw' ? 'Ничья' : won ? 'Победа' : 'Поражение';
-  $('duelText').textContent = res === 'draw' ? (G.time <= 0 ? 'Время вышло, оба на ногах.' : 'Оба попали под один взрыв.') : won ? 'Соперник подорван. Отсек твой.' : 'Тебя достали. Реванш?';
-  $('bAgain').hidden = false; $('bAgain').textContent = 'Реванш';
+function duelFinish(res) {
+  if (res === 'host') V.score[0]++; else if (res === 'guest') V.score[1]++;
+  const fin = Math.max(V.score[0], V.score[1]) >= DUEL_WINS;
+  sendSnapshot(); netSend({ t: 'end', r: res, sc: V.score, fin }); duelResult(res, fin);
+}
+function duelResult(res, fin) {
+  stickEnd(); held.length = 0;
+  const won = res === V.role, st = scoreText();
   if (won) sfx.clear();
+  if (!fin) {   // the round is over, the match goes on: a short breather, then the host deals a new map
+    G.mode = 'between'; V.nextT = 3.4;
+    const why = res === 'draw' ? (G.time <= 0 ? 'Ничья: время вышло' : 'Ничья: оба под взрывом') : won ? 'Раунд твой' : 'Раунд за соперником';
+    showBanner(why, 'Счёт ' + st + ' · до ' + DUEL_WINS + ' побед', 3.2);
+    return;
+  }
+  G.mode = 'over';
+  $('duelTitle').textContent = won ? 'Матч твой' : 'Матч проигран';
+  $('duelText').textContent = 'Итоговый счёт ' + st + (won ? '. Соперник подорван трижды.' : '. Реванш?');
+  $('bAgain').hidden = false; $('bAgain').textContent = 'Новый матч';
   showOnly('oDuel');
 }
 function remoteBomb() {
@@ -639,7 +667,7 @@ function onData(d) {
   if (V.role === 'host') {
     if (d.t === 'hello') {
       if (G.mode === 'wait' && !V.conn && d.i) { V.gid = d.i; V.conn = V.link; duelStartHost(); }
-      else if (d.i === V.gid && V.startMsg && G.mode === 'play' && G.time > DUEL_TIME - 5) netSend(V.startMsg);   // the first "start" got lost
+      else if (d.i === V.gid && V.startMsg && G.mode === 'play' && Date.now() - V.startAt < 5000) netSend(V.startMsg);   // the first "start" got lost
       return;
     }
     if (d.i !== V.gid || !V.conn) return;
@@ -654,9 +682,9 @@ function onData(d) {
     if (d.to !== V.myId) return;
     V.lastRx = Date.now();
     if (d.t === 'bye') onDrop();
-    else if (d.t === 'start') { if (!V.on || G.mode === 'over') duelStartGuest(d); }
+    else if (d.t === 'start') { if (!V.on || G.mode === 'over' || G.mode === 'between') duelStartGuest(d); }
     else if (d.t === 's') applySnapshot(d);
-    else if (d.t === 'end' && V.on) duelResult(d.r);
+    else if (d.t === 'end' && V.on && G.mode === 'play') { if (Array.isArray(d.sc)) V.score = [d.sc[0] | 0, d.sc[1] | 0]; duelResult(d.r, !!d.fin); }
   }
 }
 /* the other player is gone (said goodbye, or went silent) */
@@ -1199,7 +1227,7 @@ function updateHud() {
   if (V.on) { setHud('hLevel', 'дуэль'); setHud('hBiome', V.role === 'host' ? 'ты красная' : 'ты бирюзовая'); }
   else { setHud('hLevel', pad2(L) + '/' + MAXL); setHud('hBiome', biomeOf(L).name); }
   const menu = G.mode === 'menu';
-  setHud('hTime', String(Math.ceil(G.time))); setHud('hScore', String(menu ? save.score | 0 : G.score)); setHud('hLives', String(V.on ? (G.player.dead ? 0 : 1) : menu ? save.lives : Math.max(0, G.lives)));
+  setHud('hTime', String(Math.ceil(G.time))); setHud('hScore', V.on ? scoreText() : String(menu ? save.score | 0 : G.score)); setHud('hLives', String(V.on ? (G.player.dead ? 0 : 1) : menu ? save.lives : Math.max(0, G.lives)));
   setHud('hBombs', String(G.bombsMax)); setHud('hRange', String(G.range)); setHud('hDet', G.det ? 'есть' : 'нет');
   const low = G.time <= 30 && G.mode !== 'menu';
   if (hudCache.low !== low) { hudCache.low = low; $('hTimeBox').classList.toggle('low', low); }
@@ -1219,6 +1247,10 @@ $('bMenu2').addEventListener('click', toMenu);
 $('bMenu3').addEventListener('click', toMenu);
 $('bCancelWait').addEventListener('click', toMenu);
 $('bHost').addEventListener('click', hostDuel);
+function setMapChoice(wide) { V.wide = !!wide; $('mapStd').setAttribute('aria-pressed', String(!V.wide)); $('mapWide').setAttribute('aria-pressed', String(V.wide)); save.duelWide = V.wide; writeSave(save); }
+$('mapStd').addEventListener('click', () => setMapChoice(false));
+$('mapWide').addEventListener('click', () => setMapChoice(true));
+setMapChoice(V.wide);
 $('bJoin').addEventListener('click', () => joinDuel($('joinCode').value));
 $('joinCode').addEventListener('keydown', ev => { ev.stopPropagation(); if (ev.key === 'Enter') joinDuel($('joinCode').value); });
 $('bAgain').addEventListener('click', () => {
