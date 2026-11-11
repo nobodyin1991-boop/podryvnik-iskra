@@ -450,7 +450,11 @@ function nearestPlayer(cx, cy) {
   }
   return best;
 }
-function netSend(o) { try { if (V.conn) V.conn.send(o); } catch (e) { /* link is gone; the close handler reports it */ } }
+function netSend(o) {
+  if (!V.conn) return;
+  if (V.role === 'host') o.to = V.gid; else o.i = V.myId;   // a room code could be guessed: every message names its pair
+  try { V.conn.send(o); } catch (e) { /* link is gone; the down handler reports it */ }
+}
 function clearField() { G.bombs = []; G.blasts = []; G.enemies = []; G.parts = []; G.pops = []; G.spawns = []; G.burn.fill(0); G.flame.fill(0); G.door = { k: -1, revealed: false, wasOpen: false }; G.item = { k: -1, type: 'bomb', revealed: false, taken: true }; V.ev = []; V.ending = false; V.endT = 0; V.sendT = 0; }
 function genDuel() {
   COLS = DUEL_COLS; ROWS = DUEL_ROWS; N = COLS * ROWS;
@@ -495,10 +499,12 @@ function hostWait() {
 function duelStartHost() {
   if (G.mode !== 'wait') genDuel();          // a rematch gets a fresh map; the first round uses the one the host is waiting on
   G.player = newPlayer(1.5, 1.5, false); V.rp = newPlayer(COLS - 1.5, ROWS - 1.5, true);
-  netSend({ t: 'start', cols: COLS, rows: ROWS, level: G.level, time: G.time, grid: Array.from(G.grid.subarray(0, N)) });
+  V.syncN = 30; V.startMsg = { t: 'start', cols: COLS, rows: ROWS, level: G.level, time: G.time, grid: Array.from(G.grid.subarray(0, N)) };
+  netSend(V.startMsg);
   duelBegin('Ты красная Искра, левый верхний угол');
 }
 function duelStartGuest(d) {
+  clearInterval(V.helloT);
   COLS = d.cols; ROWS = d.rows; N = COLS * ROWS;
   G.grid.fill(EMPTY); clearField(); V.items = [];
   for (let k = 0; k < N; k++) G.grid[k] = d.grid[k];
@@ -527,12 +533,15 @@ function duelKill(pl) {
 }
 function sendSnapshot() {
   const p = G.player, rp = V.rp;
-  netSend({ t: 's', tm: r3(G.time),
+  const msg = { t: 's', tm: r3(G.time),
     h: [r3(p.x), r3(p.y), p.dir, p.moving ? 1 : 0, p.dead ? 1 : 0, p.inv > 0 ? 1 : 0],
     g: [rp.dead ? 1 : 0, rp.inv > 0 ? 1 : 0, rp.bombsMax, rp.range, rp.det ? 1 : 0],
     e: G.enemies.map(e => [e.id, e.type, r3(e.x), r3(e.y), e.dir >= 0 ? e.dir : e.last, e.dead ? 1 : 0]),
     b: G.bombs.map(b => [b.cx, b.cy, b.t === Infinity ? -1 : r3(b.t), r3(b.age), b.o || 0]),
-    ev: V.ev.splice(0) });
+    ev: V.ev.splice(0) };
+  // every couple of seconds the whole map goes along, so one lost message can never leave the two screens different
+  if (--V.syncN <= 0) { V.syncN = 30; msg.gr = Array.from(G.grid.subarray(0, N)).join(''); msg.it = V.items.filter(q => q.revealed && !q.taken).map(q => [q.k, q.type]); }
+  netSend(msg);
 }
 function applyEvent(ev) {
   const p = G.player, rp = V.rp;
@@ -564,6 +573,10 @@ function applySnapshot(d) {
   G.enemies = G.enemies.filter(e => seen.has(e.id) || e.dead > 0);
   G.bombs = d.b.map(a => ({ cx: a[0], cy: a[1], t: a[2] < 0 ? Infinity : a[2], age: a[3], o: a[4] }));
   for (const ev of d.ev) applyEvent(ev);
+  if (d.gr) {
+    for (let k = 0; k < N; k++) if (G.burn[k] <= 0) G.grid[k] = d.gr.charCodeAt(k) - 48;
+    V.items = d.it.map(a => ({ k: a[0], type: a[1], revealed: true, taken: false }));
+  }
 }
 /* the guest only plays back what the host reports */
 function guestWorld(dt) {
@@ -603,7 +616,7 @@ function duelUpdate(dt) {
     else if (G.time <= 0) { duelFinish('draw'); return; }
   }
   V.sendT -= dt;
-  if (V.sendT <= 0) { V.sendT = .05; if (host) sendSnapshot(); else netSend({ t: 'p', x: r3(p.x), y: r3(p.y), d: p.dir, m: p.moving ? 1 : 0 }); }
+  if (V.sendT <= 0) { V.sendT = .066; if (host) sendSnapshot(); else netSend({ t: 'p', x: r3(p.x), y: r3(p.y), d: p.dir, m: p.moving ? 1 : 0 }); }
 }
 function duelFinish(res) { sendSnapshot(); netSend({ t: 'end', r: res }); duelResult(res); }
 function duelResult(res) {
@@ -623,98 +636,144 @@ function remoteBomb() {
 }
 function onData(d) {
   if (!d || typeof d !== 'object') return;
-  V.lastRx = Date.now();
-  if (d.t === 'bye') { onDrop(); return; }
   if (V.role === 'host') {
+    if (d.t === 'hello') {
+      if (G.mode === 'wait' && !V.conn && d.i) { V.gid = d.i; V.conn = V.link; duelStartHost(); }
+      else if (d.i === V.gid && V.startMsg && G.mode === 'play' && G.time > DUEL_TIME - 5) netSend(V.startMsg);   // the first "start" got lost
+      return;
+    }
+    if (d.i !== V.gid || !V.conn) return;
+    V.lastRx = Date.now();
     const rp = V.rp;
-    if (d.t === 'p' && rp && !rp.dead && isFinite(d.x) && isFinite(d.y)) { rp.nx = Math.max(1, Math.min(COLS - 1, +d.x)); rp.ny = Math.max(1, Math.min(ROWS - 1, +d.y)); rp.dir = d.d | 0; rp.moving = !!d.m; }
+    if (d.t === 'bye') onDrop();
+    else if (d.t === 'p' && rp && !rp.dead && isFinite(d.x) && isFinite(d.y)) { rp.nx = Math.max(1, Math.min(COLS - 1, +d.x)); rp.ny = Math.max(1, Math.min(ROWS - 1, +d.y)); rp.dir = d.d | 0; rp.moving = !!d.m; }
     else if (d.t === 'b') remoteBomb();
-    else if (d.t === 'd') { const b = V.rp && V.rp.det && G.mode === 'play' ? G.bombs.find(q => q.o === 1) : null; if (b) explode(b); }
+    else if (d.t === 'd') { const b = rp && rp.det && G.mode === 'play' ? G.bombs.find(q => q.o === 1) : null; if (b) explode(b); }
     else if (d.t === 'again' && V.on && G.mode === 'over') duelStartHost();
   } else {
-    if (d.t === 'start') duelStartGuest(d);
+    if (d.to !== V.myId) return;
+    V.lastRx = Date.now();
+    if (d.t === 'bye') onDrop();
+    else if (d.t === 'start') { if (!V.on || G.mode === 'over') duelStartGuest(d); }
     else if (d.t === 's') applySnapshot(d);
     else if (d.t === 'end' && V.on) duelResult(d.r);
   }
 }
+/* the other player is gone (said goodbye, or went silent) */
 function onDrop() {
-  const c = V.conn; if (!c) return; V.conn = null;
-  try { c.close(); } catch (e) { /* already closed */ }
-  if (G.mode === 'wait') { clearTimeout(V.timer); netStatus('Второй игрок отключился. Комната ещё открыта, ждём снова.'); return; }
+  if (!V.conn) return;
+  if (V.role === 'host') { V.conn = null; V.gid = null; }   // the room itself stays open
+  else { const c = V.link; V.conn = null; V.link = null; clearInterval(V.helloT); clearTimeout(V.timer); try { c.close(); } catch (e) { /* already closed */ } }
+  if (G.mode === 'wait') { netStatus('Второй игрок отключился. Комната ещё открыта, ждём снова.'); return; }
   if (V.on) {
     G.mode = 'over'; stickEnd();
-    $('duelTitle').textContent = 'Связь оборвалась'; $('duelText').textContent = 'Соперник вышел или пропал интернет.'; $('bAgain').hidden = true;
+    $('duelTitle').textContent = 'Связь оборвалась'; $('duelText').textContent = 'Соперник вышел или у кого-то пропал интернет.'; $('bAgain').hidden = true;
     showOnly('oDuel');
-  } else netStatus(V.role === 'guest' ? 'Хост закрыл комнату. Попроси его создать дуэль заново и прислать новую ссылку.' : 'Второй игрок отключился. Комната ' + V.code + ' ещё открыта.');
+  } else netStatus('Хост закрыл комнату. Попроси его создать дуэль заново и прислать новую ссылку.');
+}
+/* our own line to the relay went down */
+function linkLost() {
+  V.conn = null; V.link = null; clearInterval(V.helloT); clearTimeout(V.timer);
+  if (V.on && G.mode !== 'over') {
+    const waiting = G.mode === 'wait';
+    G.mode = 'over'; stickEnd();
+    $('duelTitle').textContent = 'Связь оборвалась'; $('duelText').textContent = waiting ? 'Пропало соединение с сервером. Создай дуэль заново.' : 'У тебя пропало соединение с сервером.'; $('bAgain').hidden = true;
+    showOnly('oDuel');
+  } else if (!V.on) netFail();
 }
 function leaveDuel() {
-  clearTimeout(V.timer); netSend({ t: 'bye' });
-  const c = V.conn, pr = V.peer; V.conn = null; V.peer = null; V.on = false; V.role = null; V.rp = null; V.items = [];
+  clearTimeout(V.timer); clearInterval(V.helloT); netSend({ t: 'bye' });
+  const c = V.link; V.conn = null; V.link = null; V.on = false; V.role = null; V.rp = null; V.items = []; V.gid = null; V.startMsg = null;
   try { if (c) c.close(); } catch (e) { /* already closed */ }
-  try { if (pr) pr.destroy(); } catch (e) { /* already closed */ }
   COLS = COLS_BASE; ROWS = ROWS_BASE; N = COLS * ROWS; G.grid.fill(EMPTY); clearField(); G.bombsMax = 1; G.range = 1; G.det = false; G.score = 0;
   G.player = { x: 1.5, y: 1.5, dir: 2, travel: 2, moving: false, anim: 0, inv: 0, dead: 0 };
   netStatus('');
 }
-/* --- lobby --- */
-function netStatus(t) { for (const id of ['duelStatus', 'waitStatus']) { $(id).textContent = t; $(id).hidden = !t; } }
-function loadPeer(cb) {
-  if (window.Peer) { cb(); return; }
-  const s = document.createElement('script'); s.src = 'https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js';
-  s.onload = () => { if (window.Peer) cb(); else netFail(); }; s.onerror = netFail; document.head.appendChild(s);
+/* --- the line between the two players ---
+   Browsers on a phone network and on a home router often cannot reach each other directly, so both simply talk to a
+   public MQTT relay over an ordinary secure web socket. Below is the small part of MQTT 3.1.1 the game needs. */
+const RELAYS = ['wss://broker.hivemq.com:8884/mqtt', 'wss://test.mosquitto.org:8081/'];
+const CODE_ABC = 'ABCDEFGHJKLMNPQRSTUVWXYZ';   // the first letter of a room code says which relay the room lives on
+function mqttLink(url, subTopic, pubTopic, hd) {
+  const enc = new TextEncoder(), dec = new TextDecoder();
+  const str = s => { const b = enc.encode(s); return [b.length >> 8, b.length & 255, ...b]; };
+  const packet = (type, body) => {
+    const len = []; let n = body.length;
+    do { let d = n % 128; n = Math.floor(n / 128); if (n > 0) d |= 128; len.push(d); } while (n > 0);
+    const out = new Uint8Array(1 + len.length + body.length); out[0] = type; out.set(len, 1); out.set(body, 1 + len.length); return out;
+  };
+  let ws = null, buf = new Uint8Array(0), ping = 0, closed = false;
+  const topic = Uint8Array.from(str(pubTopic));
+  const link = {
+    up: false,
+    send(o) {
+      if (!link.up) return;
+      const p = enc.encode(JSON.stringify(o)), body = new Uint8Array(topic.length + p.length); body.set(topic, 0); body.set(p, topic.length);
+      ws.send(packet(0x30, body));
+    },
+    close() { closed = true; link.up = false; clearInterval(ping); try { ws.close(); } catch (e) { /* never opened */ } },
+  };
+  const down = () => { if (closed) return; closed = true; link.up = false; clearInterval(ping); hd.down(); };
+  try { ws = new WebSocket(url, 'mqtt'); } catch (e) { setTimeout(down, 0); return link; }
+  ws.binaryType = 'arraybuffer';
+  ws.onopen = () => ws.send(packet(0x10, Uint8Array.from([...str('MQTT'), 4, 2, 0, 30, ...str('iskra' + Math.random().toString(36).slice(2, 12))])));
+  ws.onmessage = ev => {
+    const inc = new Uint8Array(ev.data), m = new Uint8Array(buf.length + inc.length); m.set(buf); m.set(inc, buf.length); buf = m;
+    for (;;) {
+      if (buf.length < 2) return;
+      let mult = 1, len = 0, i = 1, d;
+      do { if (i >= buf.length) return; d = buf[i++]; len += (d & 127) * mult; mult *= 128; } while (d & 128);
+      if (buf.length < i + len) return;
+      const type = buf[0] >> 4, body = buf.slice(i, i + len); buf = buf.slice(i + len);
+      if (type === 2) { if (body[1] !== 0) { down(); try { ws.close(); } catch (e) { /* ignore */ } return; } ws.send(packet(0x82, Uint8Array.from([0, 1, ...str(subTopic), 0]))); }
+      else if (type === 9) { link.up = true; ping = setInterval(() => { try { ws.send(Uint8Array.from([0xC0, 0])); } catch (e) { /* closing */ } }, 20000); hd.up(); }
+      else if (type === 3) { const tl = (body[0] << 8) | body[1]; let obj = null; try { obj = JSON.parse(dec.decode(body.subarray(2 + tl))); } catch (e) { /* not ours */ } if (obj) hd.msg(obj); }
+    }
+  };
+  ws.onclose = down; ws.onerror = down;
+  return link;
 }
+const makeLink = (...a) => (window.IskraLink || mqttLink)(...a);
+const roomTopics = code => ({ h: 'iskra-duel/v1/' + code + '/h', g: 'iskra-duel/v1/' + code + '/g' });
+const relayOf = code => RELAYS[Math.max(0, Math.min(RELAYS.length - 1, Math.floor(CODE_ABC.indexOf(code[0]) / 8)))];
+function netStatus(t) { for (const id of ['duelStatus', 'waitStatus']) { $(id).textContent = t; $(id).hidden = !t; } }
 function netFail() {
   const here = /github\.io$|^localhost$|^127\.0\.0\.1$/.test(location.hostname);
-  netStatus(here || PAGES_URL.indexOf('http') !== 0 ? 'Сеть не отвечает. Проверь интернет и попробуй ещё раз.' : 'На этой странице сеть для дуэли закрыта. Открой игру по адресу ' + PAGES_URL);
+  netStatus(here || PAGES_URL.indexOf('http') !== 0 ? 'Сервер дуэлей не отвечает. Проверь интернет и попробуй ещё раз.' : 'На этой странице сеть для дуэли закрыта. Открой игру по адресу ' + PAGES_URL);
 }
-function netError(err) {
-  const type = err && err.type;
-  if (type === 'peer-unavailable') netStatus('Комната не найдена. Проверь код: возможно, хост закрыл страницу.');
-  else if (type === 'unavailable-id' && V.role === 'host') { try { V.peer.destroy(); } catch (e) { /* ignore */ } V.peer = null; hostDuel(); }
-  else if (!V.on) netFail();
-}
-function wire(c) { c.on('data', onData); c.on('close', onDrop); c.on('error', onDrop); }
-function hostDuel() {
-  ac();
-  if (V.peer) leaveDuel();
+function hostDuel(tryN) {
+  tryN = typeof tryN === 'number' ? tryN : 0;
+  ac(); if (V.link) leaveDuel();
+  if (tryN >= RELAYS.length) { netFail(); return; }
   V.role = 'host'; netStatus('Создаём комнату…');
-  loadPeer(() => {
-    const abc = 'ABCDEFGHJKLMNPQRSTUVWXYZ'; V.code = ''; for (let i = 0; i < 5; i++) V.code += abc[ri(abc.length)];
-    let peer; try { peer = V.peer = new window.Peer('iskra-duel-' + V.code); } catch (e) { netFail(); return; }
-    peer.on('open', () => {
-      $('duelUrl').value = location.href.split('#')[0] + '#duel-' + V.code; $('duelInvite').hidden = false;
-      hostWait(); netStatus('Комната ' + V.code + ' открыта.');
-    });
-    peer.on('connection', c => {
-      if (V.conn) { try { c.close(); } catch (e) { /* ignore */ } return; }   // the room holds two
-      V.conn = c; wire(c); c.on('open', duelStartHost);
-      netStatus('Второй игрок нашёл комнату, соединяемся…');
-      clearTimeout(V.timer);
-      V.timer = setTimeout(() => {   // signalling worked but the direct link did not come up
-        if (V.on || V.conn !== c) return;
-        V.conn = null; try { c.close(); } catch (e) { /* ignore */ }
-        netStatus('Прямое соединение не установилось: сеть одного из вас его не пропускает. Попробуйте оба через один Wi-Fi или оба через мобильный интернет. Комната ещё открыта.');
-      }, 20000);
-    });
-    peer.on('error', netError);
+  V.code = CODE_ABC[tryN * 8 + ri(8)]; for (let i = 0; i < 4; i++) V.code += CODE_ABC[ri(CODE_ABC.length)];
+  const tp = roomTopics(V.code); let opened = false;
+  const next = () => { if (V.link !== link || opened) return; link.close(); V.link = null; hostDuel(tryN + 1); };   // this relay is unreachable: try the next one
+  const link = V.link = makeLink(RELAYS[tryN], tp.g, tp.h, {
+    up() { if (V.link !== link) return; opened = true; clearTimeout(V.timer); $('duelUrl').value = location.href.split('#')[0] + '#duel-' + V.code; hostWait(); netStatus('Комната ' + V.code + ' открыта.'); },
+    msg(d) { if (V.link === link) onData(d); },
+    down() { if (V.link !== link) return; if (opened) linkLost(); else next(); },
   });
+  clearTimeout(V.timer); V.timer = setTimeout(next, 8000);
 }
 function joinDuel(raw) {
   const code = String(raw || '').toUpperCase().replace(/[^A-Z]/g, '').slice(0, 5);
   if (code.length < 5) { netStatus('В коде пять букв.'); return; }
-  if (V.role === 'host' && V.peer) { netStatus('Ты уже создал комнату ' + V.code + '. Код вводит только второй игрок, а ты просто жди на этой странице.'); return; }
-  ac(); if (V.peer) leaveDuel();
-  V.role = 'guest'; netStatus('Подключаемся к комнате ' + code + '…');
-  loadPeer(() => {
-    let peer; try { peer = V.peer = new window.Peer(); } catch (e) { netFail(); return; }
-    peer.on('open', () => {
-      const c = V.conn = peer.connect('iskra-duel-' + code, { reliable: true, serialization: 'json' });
-      wire(c); c.on('open', () => netStatus('Подключено. Ждём старта…'));
-      netStatus('Ищем комнату ' + code + ' и соединяемся…');
-    });
-    peer.on('error', netError);
-    V.timer = setTimeout(() => { if (!V.on && V.role === 'guest') netStatus('Не получилось соединиться за 20 секунд. Если хост не закрывал страницу, значит сеть одного из вас не пропускает прямое соединение: попробуйте оба через один Wi-Fi или оба через мобильный интернет.'); }, 20000);
+  ac(); if (V.link) leaveDuel();
+  V.role = 'guest'; V.myId = Math.random().toString(36).slice(2, 10); netStatus('Подключаемся к комнате ' + code + '…');
+  const tp = roomTopics(code); let opened = false;
+  const hello = () => netSend({ t: 'hello' });
+  const link = V.link = V.conn = makeLink(relayOf(code), tp.h, tp.g, {
+    up() { if (V.link !== link) return; opened = true; netStatus('Стучимся в комнату ' + code + '…'); hello(); V.helloT = setInterval(hello, 1000); },
+    msg(d) { if (V.link === link) onData(d); },
+    down() { if (V.link !== link) return; if (opened) linkLost(); else { V.link = null; V.conn = null; clearTimeout(V.timer); netFail(); } },
   });
+  clearTimeout(V.timer);
+  V.timer = setTimeout(() => {
+    if (V.on || V.link !== link) return;
+    clearInterval(V.helloT); link.close(); V.link = null; V.conn = null;
+    netStatus(opened ? 'Комната ' + code + ' не отвечает. Проверь код: возможно, хост закрыл страницу или создал новую комнату.' : 'Сервер дуэлей не отвечает. Проверь интернет и попробуй ещё раз.');
+  }, 15000);
 }
 
 /* ---------- rules ---------- */
@@ -1097,7 +1156,7 @@ function win() {
   showOnly('oWin');
 }
 function toMenu() {
-  if (V.on || V.peer) leaveDuel();
+  if (V.on || V.link) leaveDuel();
   G.mode = 'menu'; G.paused = false; hideBanner(); stickEnd();
   refreshMenu(); showOnly('oMenu');
 }
