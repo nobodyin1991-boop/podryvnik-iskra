@@ -1,9 +1,12 @@
 <!doctype html>
+<!-- Подрывник Искра. © 2026 nobodyin1991-boop. Все права защищены. Условия использования: файл LICENSE в репозитории https://github.com/nobodyin1991-boop/podryvnik-iskra -->
 <html lang="ru">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
 <meta name="description" content="Подрывник Искра: бумажная аркада с бомбами. 30 отсеков в одиночку и дуэль вдвоём по ссылке.">
+<meta name="author" content="nobodyin1991-boop">
+<meta name="copyright" content="© 2026 nobodyin1991-boop. Все права защищены.">
 <meta name="theme-color" content="#f0e7d3">
 <title>Подрывник Искра</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Golos+Text:wght@400;600&display=swap">
@@ -113,6 +116,7 @@ button:focus-visible{outline:3px solid var(--teal); outline-offset:2px}
 #duelUrl{flex:1 1 220px; font-weight:400; font-size:13px}
 .status{margin:0; align-self:flex-start; font-weight:600; background:var(--ink); color:var(--paper); padding:4px 10px}
 .dim a{color:var(--ink); font-weight:600}
+.legal{grid-column:1/-1; margin:0; padding-top:12px; border-top:3px solid var(--ink); font-size:12px; line-height:1.5; color:var(--muted)}
 .how{display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:10px 28px}
 .how ul{margin:0; padding:0; list-style:none; display:flex; flex-direction:column; gap:6px; font-size:14px; line-height:1.4}
 .how li b{font-weight:600}
@@ -253,6 +257,8 @@ body.touch.menu-open .controls{display:none}
         <button class="btn primary" id="bRetry" type="button">С первого отсека</button>
         <button class="btn" id="bMenu1" type="button">В меню</button>
       </div>
+
+      <p class="legal">© 2026 nobodyin1991-boop. «Подрывник Искра»: название, персонажи, графика, тексты и код. Все права защищены. Копирование и переделка без согласия автора запрещены.</p>
     </div>
   </section>
 

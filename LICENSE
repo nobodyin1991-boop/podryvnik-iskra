@@ -1,0 +1,67 @@
+Подрывник Искра
+© 2026 nobodyin1991-boop. Все права защищены.
+
+Это не открытая лицензия. Исходный код опубликован, чтобы игра работала в браузере
+и чтобы её устройство можно было посмотреть. Публикация кода не передаёт прав на него.
+
+1. Что охраняется
+   Игра «Подрывник Искра» целиком и каждая её часть: название и логотип, персонаж
+   «Искра» и остальные персонажи с их именами и обликом, графика и визуальный стиль,
+   оформление меню и интерфейса, тексты, звуки, устройство уровней и режимов,
+   исходный код.
+
+2. Что разрешено без отдельного согласия
+   - играть в игру на официальной странице
+     https://nobodyin1991-boop.github.io/podryvnik-iskra/ ;
+   - читать исходный код в этом репозитории в ознакомительных целях;
+   - делиться ссылкой на игру, публиковать скриншоты и видео прохождения
+     с указанием названия игры и ссылки на неё.
+
+3. Что запрещено без письменного согласия правообладателя
+   - копировать, распространять или размещать игру либо её части на других сайтах,
+     в магазинах приложений и в составе других продуктов;
+   - изменять игру и создавать на её основе производные работы, включая
+     перерисовки и переименованные копии;
+   - использовать название, персонажей, графику и визуальный стиль игры в других
+     играх, товарах и рекламе;
+   - использовать игру или её части в коммерческих целях;
+   - использовать материалы игры для обучения моделей машинного обучения;
+   - удалять или изменять этот текст и знак охраны авторского права.
+
+4. Чужие компоненты
+   Шрифты Dela Gothic One и Golos Text принадлежат их авторам, распространяются
+   по лицензии SIL Open Font License 1.1 и подгружаются с Google Fonts. На них этот
+   текст не распространяется.
+
+5. Отсутствие гарантий
+   Игра предоставляется «как есть», без каких-либо гарантий. Правообладатель не
+   отвечает за ущерб, связанный с её использованием.
+
+По вопросам использования и разрешений: через Issues этого репозитория.
+
+--------------------------------------------------------------------------------
+
+Podryvnik Iskra
+Copyright (c) 2026 nobodyin1991-boop. All rights reserved.
+
+This is not an open-source license. The source code is published so that the game
+can run in a browser and can be inspected. Publication grants no rights to it.
+
+You may play the game at https://nobodyin1991-boop.github.io/podryvnik-iskra/,
+read the source code in this repository for reference, share links to the game,
+and publish screenshots and gameplay videos that credit the game by name and link.
+
+Without the copyright holder's prior written permission you may not copy,
+redistribute, host, modify, or create derivative works of the game or any part of
+it; use its name, characters, artwork, or visual style in other games, products,
+or advertising; use it commercially; use its materials to train machine-learning
+models; or remove or alter this notice.
+
+The fonts Dela Gothic One and Golos Text belong to their authors, are licensed
+under the SIL Open Font License 1.1, and are loaded from Google Fonts; this notice
+does not cover them.
+
+THE GAME IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND. THE COPYRIGHT HOLDER
+IS NOT LIABLE FOR ANY DAMAGE ARISING FROM ITS USE.
+
+Permission requests: open an issue in this repository.
