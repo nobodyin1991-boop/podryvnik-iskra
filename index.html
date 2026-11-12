@@ -757,7 +757,7 @@ function genLevel(L) {
 /* ---------- duel over the network ----------
    One browser hosts: it owns the map, the bombs, the fire and the tenants. Each player moves their own Искра
    locally (so steering stays instant) and reports the position; the host decides who picked what up and who got hit. */
-const DUEL_WINS = 3, PAGES_URL = 'https://2-28-227-3.sslip.io/iskra/';
+const DUEL_WINS = 3, PAGES_URL = 'https://brozcogames.com/iskra/';
 const SANDBOX = /claude|anthropic/i.test(location.hostname);   // the Claude preview page blocks network sockets
 /* A match holds two to four players. Slot 0 is the host; every slot has its own corner and its own ink. */
 const SLOT_INK = [RED, TEAL, '#7a4fb0', '#2f6fd0'], SLOT_BODY = [CREAM, '#e4f4ef', '#efe6f7', '#e3edfa'];
@@ -1086,7 +1086,7 @@ function leaveDuel() {
 // Our own relay comes first; the public test brokers are only a fallback if it cannot be reached.
 // The relay login is not a secret (it ships to every browser); on the server it is limited to the game topics.
 const RELAYS = [
-  { u: 'wss://2-28-227-3.sslip.io/mqtt', n: 'games', p: 'n7VbJPv0rL4KmkisEtNw' },
+  { u: 'wss://brozcogames.com/mqtt', n: 'games', p: 'n7VbJPv0rL4KmkisEtNw' },
   { u: 'wss://broker.hivemq.com:8884/mqtt' },
   { u: 'wss://test.mosquitto.org:8081/' },
 ];
