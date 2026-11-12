@@ -142,12 +142,39 @@ body.touch.menu-open .controls{display:none}
 .stickwrap{flex:none; width:150px; display:grid; place-items:center; touch-action:none}
 .stick{position:relative; width:118px; height:118px; border-radius:50%; border:3px solid var(--ink); background:#fffaf0; box-shadow:4px 4px 0 var(--ink); touch-action:none}
 .stick::before{content:""; position:absolute; inset:14px; border-radius:50%; border:2.5px dashed var(--muted)}
-.act{display:flex; align-items:center; justify-content:flex-end; gap:10px; flex:1; min-width:0}
+/* bomb in the left corner for the left thumb, blast next to it; the stick stays on the right */
+.act{display:flex; flex-direction:row-reverse; align-items:center; justify-content:flex-end; gap:10px; flex:1; min-width:0}
 .abtn{border-radius:50%; border:3px solid var(--ink); background:#fffaf0; font-family:var(--display); font-size:11px; box-shadow:4px 4px 0 var(--ink); touch-action:none}
 .abtn.bomb{width:92px; height:92px; background:var(--red); color:#fffaf0; font-size:12px}
 .abtn.det{width:66px; height:66px; opacity:.35; font-size:10px}
 .abtn.det.on{opacity:1; background:var(--mustard)}
-.abtn:active{transform:translate(4px,4px); box-shadow:none}
+/* every player may move and resize the three controls (Controls in the menu); the saved shift and size live in these variables */
+#bBomb,#bDet,#stick{transform:translate(var(--dx,0px),var(--dy,0px)) scale(var(--sc,1))}
+.abtn:active{transform:translate(calc(var(--dx,0px) + 4px),calc(var(--dy,0px) + 4px)) scale(var(--sc,1)); box-shadow:none}
+/* arrows instead of the stick */
+.arw{display:none; position:absolute; width:36%; height:36%; border:3px solid var(--ink); border-radius:9px; background:#fffaf0; box-shadow:3px 3px 0 var(--ink); pointer-events:none}
+.arw::after{content:""; position:absolute; inset:0; margin:auto; width:0; height:0; border:10px solid transparent; border-top-width:0; border-bottom-color:var(--ink); transform:rotate(var(--r))}
+.arw.a0{left:32%; top:0; --r:0deg} .arw.a1{right:0; top:32%; --r:90deg} .arw.a2{left:32%; bottom:0; --r:180deg} .arw.a3{left:0; top:32%; --r:270deg}
+.arw.on{background:var(--red)} .arw.on::after{border-bottom-color:#fffaf0}
+body.dpad .arw{display:block}
+body.dpad .knob, body.dpad .band, body.dpad .stick::before{display:none}
+body.dpad .stick{border-color:transparent; background:transparent; box-shadow:none; border-radius:0; width:138px; height:138px}
+/* arranging the controls */
+.arrbar{display:none; position:fixed; z-index:40; left:0; right:0; top:0; padding:8px 12px calc(8px); gap:8px; align-items:center; flex-wrap:wrap; background:var(--ink); color:var(--paper); font-weight:600; font-size:13px; padding-top:calc(8px + env(safe-area-inset-top,0px))}
+.arrbar span{flex:1 1 180px; min-width:0}
+.arrbar .btn{padding:7px 12px; font-size:12px; color:var(--ink)} .arrbar .btn.primary{color:#fffaf0; font-size:13px; padding:7px 14px}
+body.arrange .arrbar{display:flex}
+body.arrange .overlay{display:none}
+body.arrange #bBomb, body.arrange #bDet, body.arrange #stick{outline:3px dashed var(--teal); outline-offset:4px}
+body.arrange .sel{outline-color:var(--red)!important; outline-style:solid!important}
+body.arrange .abtn.det{opacity:1}
+.touchonly{display:none} body.touch .touchonly{display:inline-block}
+/* full-screen field: the map takes the whole width (and the whole screen when the phone lies sideways); the controls float over it */
+body.fullfield.touch:not(.menu-open){padding-left:0; padding-right:0}
+body.fullfield.touch:not(.menu-open) .hud{padding:0 8px}
+body.fullfield.touch:not(.menu-open) .stage{margin:0; border-left:0; border-right:0; border-bottom:0; border-radius:0; box-shadow:none}
+body.fullfield.touch:not(.menu-open) .controls{position:fixed; z-index:5; left:max(10px,env(safe-area-inset-left,0px)); right:max(10px,env(safe-area-inset-right,0px)); bottom:calc(8px + env(safe-area-inset-bottom,0px)); pointer-events:none; opacity:.9}
+body.fullfield.touch:not(.menu-open) .controls .abtn, body.fullfield.touch:not(.menu-open) .controls .stickwrap{pointer-events:auto}
 .band{position:absolute; z-index:20; left:50%; top:50%; height:18px; margin-top:-9px; width:0; background:var(--mustard); border:3px solid var(--ink); border-radius:9px; transform-origin:0 50%; pointer-events:none}
 .knob{position:absolute; z-index:21; left:50%; top:50%; width:56px; height:56px; margin:-28px 0 0 -28px; border-radius:50%; background:var(--red); border:3px solid var(--ink); box-shadow:3px 3px 0 var(--ink); pointer-events:none}
 
@@ -179,6 +206,7 @@ body.touch.menu-open .controls{display:none}
   body.touch:not(.menu-open) .stickwrap{grid-column:3; grid-row:5; width:auto; align-self:end; padding-bottom:calc(6px + env(safe-area-inset-bottom,0px))}
   .stick{width:104px; height:104px}
   .abtn.bomb{width:82px; height:82px} .abtn.det{width:58px; height:58px}
+  body.dpad .stick{width:108px; height:108px}
   /* menu on a short screen: no counters, a small print, so Play is on the first screen */
   body.menu-open .stat{display:none}
   .poster{grid-template-columns:minmax(0,170px) minmax(0,1fr); padding:10px 12px 22px; gap:12px 20px; align-items:start}
@@ -192,6 +220,23 @@ body.touch.menu-open .controls{display:none}
 /* tablet held sideways: one thumb each. Bomb and blast in the left corner, the stick in the right corner. */
 @media (orientation:landscape) and (min-height:521px){
   body.touch .controls .act{flex-direction:row-reverse; justify-content:flex-end}
+}
+/* phone sideways with a full-screen field: the field lies under everything, counters and controls stay in their side columns on top of it */
+@media (orientation:landscape) and (max-height:520px){
+  body.fullfield.touch:not(.menu-open) .stage{position:fixed; inset:0; border:0}
+  body.fullfield.touch:not(.menu-open) .stat, body.fullfield.touch:not(.menu-open) .hud-btns{position:relative; z-index:3; opacity:.9}
+  body.fullfield.touch:not(.menu-open) .act, body.fullfield.touch:not(.menu-open) .stickwrap{position:relative; z-index:3; opacity:.9}
+}
+/* the narrow outer screen of a folding phone */
+@media (max-width:350px){
+  body{padding-left:max(8px,env(safe-area-inset-left,0px)); padding-right:max(8px,env(safe-area-inset-right,0px))}
+  .controls{height:132px; gap:6px} .act{gap:6px}
+  .stickwrap{width:118px} .stick{width:102px; height:102px}
+  body.dpad .stick{width:112px; height:112px}
+  .abtn.bomb{width:76px; height:76px} .abtn.det{width:54px; height:54px}
+  .stat{padding:1px 4px; gap:3px} .stat .lbl{font-size:8px} .stat b{font-size:11px}
+  .hud-btns button{padding:3px 5px; font-size:10px}
+  .menu{padding:0 8px} .segb{padding:9px 9px; font-size:13px}
 }
 @media (prefers-reduced-motion:reduce){ .banner,.btn{transition:none} }
 </style>
@@ -225,7 +270,7 @@ body.touch.menu-open .controls{display:none}
         <p class="kicker"><span data-i18n="kicker">A paper arcade with bombs</span></p>
         <h1 data-i18n-html="h1">Iskra <em>Blast</em></h1>
         <p class="lead" data-i18n="lead">Iskra the courier robot is clearing an abandoned station. Blow up crates, find the upgrade and the hatch hidden under them, drive out every tenant and leave before time runs out.</p>
-        <div class="row"><button class="btn primary" id="bPlay" type="button">Play</button><button class="btn" id="bReset" type="button" hidden>Start over</button></div>
+        <div class="row"><button class="btn primary" id="bPlay" type="button">Play</button><button class="btn" id="bReset" type="button" hidden>Start over</button><button class="btn touchonly" id="bCtlMenu" type="button" data-i18n="ctlBtn">Controls</button></div>
       </div>
 
       <div class="block" id="duelBlock">
@@ -277,12 +322,23 @@ body.touch.menu-open .controls{display:none}
     </div>
   </section>
 
+  <section class="overlay" id="oCtl" hidden>
+    <div class="sheet">
+      <h2 data-i18n="ctlTitle">Controls</h2>
+      <p class="dim" data-i18n="ctlMove">Movement</p>
+      <span class="seg" role="group"><button class="segb" id="mvStick" type="button" data-i18n="ctlStick">Stick</button><button class="segb" id="mvArrows" type="button" data-i18n="ctlArrows">Arrows</button></span>
+      <p class="dim" data-i18n="ctlField">Field</p>
+      <span class="seg" role="group"><button class="segb" id="fdStd" type="button" data-i18n="ctlFieldStd">Framed</button><button class="segb" id="fdFull" type="button" data-i18n="ctlFieldFull">Full screen</button></span>
+      <div class="row"><button class="btn" id="bArrange" type="button" data-i18n="ctlArrange">Move and resize the buttons</button><button class="btn primary" id="bCtlClose" type="button" data-i18n="ctlDone">Done</button></div>
+    </div>
+  </section>
   <section class="overlay" id="oPause" hidden>
     <div class="sheet">
       <h2 id="pauseTitle">Pause</h2>
       <div class="row">
         <button class="btn primary" id="bResume" type="button" data-i18n="resume">Resume</button>
         <button class="btn" id="bQuit" type="button" data-i18n="toMenu">Menu</button>
+        <button class="btn touchonly" id="bCtlPause" type="button" data-i18n="ctlBtn">Controls</button>
       </div>
     </div>
   </section>
@@ -335,12 +391,13 @@ body.touch.menu-open .controls{display:none}
   </section>
 </main>
 
+<div class="arrbar" id="arrBar"><span data-i18n="ctlHint">Drag a control to move it. Tap it and use − + to resize.</span><button class="btn" id="bArrMinus" type="button" aria-label="Smaller">−</button><button class="btn" id="bArrPlus" type="button" aria-label="Bigger">+</button><button class="btn" id="bArrReset" type="button" data-i18n="ctlReset">Reset</button><button class="btn primary" id="bArrDone" type="button" data-i18n="ctlDone">Done</button></div>
 <div class="controls" id="controls">
   <div class="act">
     <button class="abtn det" id="bDet" type="button" data-i18n="btnDet">Blast</button>
     <button class="abtn bomb" id="bBomb" type="button" data-i18n="btnBomb">Bomb</button>
   </div>
-  <div class="stickwrap" id="padZone"><div class="stick" id="stick"><div class="band" id="band"></div><div class="knob" id="knob"></div></div></div>
+  <div class="stickwrap" id="padZone"><div class="stick" id="stick"><i class="arw a0" id="arw0"></i><i class="arw a1" id="arw1"></i><i class="arw a2" id="arw2"></i><i class="arw a3" id="arw3"></i><div class="band" id="band"></div><div class="knob" id="knob"></div></div></div>
 </div>
 
 <script>
@@ -408,6 +465,7 @@ en: {
   how3: "<b>Keyboard:</b> <kbd>←↑↓→</kbd> or <kbd>WASD</kbd> to move, <kbd>Space</kbd> bomb, <kbd>X</kbd> detonator, <kbd>P</kbd> pause.",
   how4: "Each bay hides one upgrade: +1 blast range or +1 bomb. There is a single detonator in the whole game: it is hidden in bay 06 and stays with you for good. Blasting an open hatch lets new tenants out.",
   how5: "You have three lives, and every fifth bay gives one more. When the lives run out everything resets and the route starts from bay one. From the Foundry on, maps are one and a half times wider.",
+  ctlBtn: "Controls", ctlTitle: "Controls", ctlMove: "Movement", ctlStick: "Stick", ctlArrows: "Arrows", ctlField: "Field", ctlFieldStd: "Framed", ctlFieldFull: "Full screen", ctlArrange: "Move and resize the buttons", ctlReset: "Reset", ctlDone: "Done", ctlHint: "Drag a control to move it. Tap it and use − + to resize.",
   pauseT: "Pause", leaveT: "Leave the duel?", resume: "Resume", toMenu: "Menu", overT: "Iskra shut down", retry: "From bay one", winT: "The station is clear",
   legal: "© 2026 Brozco Games. Iskra Blast: name, characters, artwork, text and code. All rights reserved. Copying or reworking without the author’s consent is prohibited.", privacy: "Privacy policy",
   waitT: "Waiting for player two", waitP: "You are already on the map and the game is paused. Send the link to the other player: the pause lifts as soon as they open it.",
@@ -453,6 +511,7 @@ ru: {
   how3: "<b>Клавиатура:</b> <kbd>←↑↓→</kbd> или <kbd>WASD</kbd> ходить, <kbd>Пробел</kbd> бомба, <kbd>X</kbd> детонатор, <kbd>P</kbd> пауза.",
   how4: "В каждом отсеке одно улучшение: +1 к дальности взрыва или +1 бомба. Детонатор один на всю игру, спрятан в отсеке 06 и остаётся с тобой навсегда. Взрыв по открытому люку выпускает новых жильцов.",
   how5: "Жизней три, за каждый пятый отсек дают ещё одну. Кончились жизни — всё сбрасывается и маршрут начинается с первого отсека. С Литейной карты в полтора раза шире.",
+  ctlBtn: "Управление", ctlTitle: "Управление", ctlMove: "Движение", ctlStick: "Джойстик", ctlArrows: "Стрелки", ctlField: "Поле", ctlFieldStd: "В рамке", ctlFieldFull: "На весь экран", ctlArrange: "Подвинуть и увеличить кнопки", ctlReset: "Сбросить", ctlDone: "Готово", ctlHint: "Перетащи кнопку, чтобы подвинуть. Нажми на неё и меняй размер кнопками − +.",
   pauseT: "Пауза", leaveT: "Выйти из дуэли?", resume: "Дальше", toMenu: "В меню", overT: "Искра отключилась", retry: "С первого отсека", winT: "Станция свободна",
   legal: "© 2026 Brozco Games. «Подрывник Искра»: название, персонажи, графика, тексты и код. Все права защищены. Копирование и переделка без согласия автора запрещены.", privacy: "Политика конфиденциальности",
   waitT: "Ждём второго игрока", waitP: "Ты уже на карте, игра на паузе. Отправь ссылку второму: как только он её откроет, пауза снимется сама.",
@@ -498,6 +557,7 @@ es: {
   how3: "<b>Teclado:</b> <kbd>←↑↓→</kbd> o <kbd>WASD</kbd> para moverte, <kbd>Espacio</kbd> bomba, <kbd>X</kbd> detonador, <kbd>P</kbd> pausa.",
   how4: "Cada sector esconde una mejora: +1 de alcance o +1 bomba. Solo hay un detonador en todo el juego: está en el sector 06 y se queda contigo para siempre. Volar una escotilla abierta suelta nuevos inquilinos.",
   how5: "Tienes tres vidas y cada quinto sector da una más. Si te quedas sin vidas, todo se reinicia y la ruta empieza desde el sector uno. A partir de la Fundición los mapas son una vez y media más anchos.",
+  ctlBtn: "Controles", ctlTitle: "Controles", ctlMove: "Movimiento", ctlStick: "Palanca", ctlArrows: "Flechas", ctlField: "Campo", ctlFieldStd: "Con marco", ctlFieldFull: "Pantalla completa", ctlArrange: "Mover y agrandar los botones", ctlReset: "Restablecer", ctlDone: "Listo", ctlHint: "Arrastra un control para moverlo. Tócalo y usa − + para cambiar su tamaño.",
   pauseT: "Pausa", leaveT: "¿Salir del duelo?", resume: "Seguir", toMenu: "Menú", overT: "Iskra se apagó", retry: "Desde el sector uno", winT: "La estación está despejada",
   legal: "© 2026 Brozco Games. Iskra Blast: nombre, personajes, gráficos, textos y código. Todos los derechos reservados. Prohibido copiar o modificar sin permiso del autor.", privacy: "Política de privacidad",
   waitT: "Esperando al segundo jugador", waitP: "Ya estás en el mapa y el juego está en pausa. Envía el enlace al otro jugador: la pausa termina en cuanto lo abra.",
@@ -543,6 +603,7 @@ zh: {
   how3: "<b>键盘：</b><kbd>←↑↓→</kbd> 或 <kbd>WASD</kbd> 移动，<kbd>空格</kbd> 放炸弹，<kbd>X</kbd> 引爆，<kbd>P</kbd> 暂停。",
   how4: "每个舱室藏着一个强化：爆炸范围 +1 或炸弹 +1。整个游戏只有一个引爆器：它藏在 06 号舱室，拿到后永久保留。炸到打开的舱口会放出新的住户。",
   how5: "你有三条命，每过五个舱室再得一条。生命用完后一切重置，路线从第一个舱室重新开始。从“铸造厂”开始，地图宽度变为一倍半。",
+  ctlBtn: "操作", ctlTitle: "操作", ctlMove: "移动方式", ctlStick: "摇杆", ctlArrows: "方向键", ctlField: "场地", ctlFieldStd: "带边框", ctlFieldFull: "全屏", ctlArrange: "移动和缩放按钮", ctlReset: "重置", ctlDone: "完成", ctlHint: "拖动按钮可移动位置。点一下按钮，再用 − + 调整大小。",
   pauseT: "暂停", leaveT: "退出对决？", resume: "继续", toMenu: "菜单", overT: "Iskra 关机了", retry: "从第一个舱室开始", winT: "空间站已清理完毕",
   legal: "© 2026 Brozco Games。Iskra Blast：名称、角色、美术、文字与代码。保留所有权利。未经作者同意，禁止复制或改编。", privacy: "隐私政策",
   waitT: "等待第二位玩家", waitP: "你已经在地图上，游戏处于暂停状态。把链接发给对方：他一打开，暂停就会解除。",
@@ -588,6 +649,7 @@ de: {
   how3: "<b>Tastatur:</b> <kbd>←↑↓→</kbd> oder <kbd>WASD</kbd> bewegen, <kbd>Leertaste</kbd> Bombe, <kbd>X</kbd> Zünder, <kbd>P</kbd> Pause.",
   how4: "In jedem Sektor steckt ein Upgrade: +1 Reichweite oder +1 Bombe. Im ganzen Spiel gibt es nur einen Zünder: Er liegt in Sektor 06 und bleibt für immer bei dir. Wer eine offene Luke sprengt, lässt neue Bewohner heraus.",
   how5: "Du hast drei Leben, jeder fünfte Sektor bringt eines dazu. Sind die Leben aufgebraucht, wird alles zurückgesetzt und die Route beginnt bei Sektor eins. Ab der Gießerei sind die Karten anderthalbmal so breit.",
+  ctlBtn: "Steuerung", ctlTitle: "Steuerung", ctlMove: "Bewegung", ctlStick: "Stick", ctlArrows: "Pfeile", ctlField: "Spielfeld", ctlFieldStd: "Mit Rahmen", ctlFieldFull: "Vollbild", ctlArrange: "Tasten verschieben und vergrößern", ctlReset: "Zurücksetzen", ctlDone: "Fertig", ctlHint: "Zieh eine Taste, um sie zu verschieben. Tippe sie an und ändere die Größe mit − +.",
   pauseT: "Pause", leaveT: "Duell verlassen?", resume: "Weiter", toMenu: "Menü", overT: "Iskra hat sich abgeschaltet", retry: "Ab Sektor eins", winT: "Die Station ist frei",
   legal: "© 2026 Brozco Games. Iskra Blast: Name, Figuren, Grafik, Texte und Code. Alle Rechte vorbehalten. Kopieren oder Bearbeiten ohne Zustimmung des Autors ist untersagt.", privacy: "Datenschutzerklärung",
   waitT: "Warten auf Spieler zwei", waitP: "Du bist schon auf der Karte, das Spiel ist pausiert. Schick den Link an den anderen Spieler: Sobald er ihn öffnet, endet die Pause.",
@@ -633,6 +695,7 @@ pt: {
   how3: "<b>Teclado:</b> <kbd>←↑↓→</kbd> ou <kbd>WASD</kbd> para andar, <kbd>Espaço</kbd> bomba, <kbd>X</kbd> detonador, <kbd>P</kbd> pausa.",
   how4: "Cada setor esconde uma melhoria: +1 de alcance ou +1 bomba. Só existe um detonador no jogo inteiro: ele está no setor 06 e fica com você para sempre. Explodir uma escotilha aberta solta novos moradores.",
   how5: "Você tem três vidas, e a cada cinco setores ganha mais uma. Quando as vidas acabam, tudo é reiniciado e a rota começa do setor um. A partir da Fundição, os mapas ficam uma vez e meia mais largos.",
+  ctlBtn: "Controles", ctlTitle: "Controles", ctlMove: "Movimento", ctlStick: "Alavanca", ctlArrows: "Setas", ctlField: "Campo", ctlFieldStd: "Com moldura", ctlFieldFull: "Tela cheia", ctlArrange: "Mover e aumentar os botões", ctlReset: "Redefinir", ctlDone: "Pronto", ctlHint: "Arraste um controle para movê-lo. Toque nele e use − + para mudar o tamanho.",
   pauseT: "Pausa", leaveT: "Sair do duelo?", resume: "Continuar", toMenu: "Menu", overT: "Iskra desligou", retry: "Do setor um", winT: "A estação está livre",
   legal: "© 2026 Brozco Games. Iskra Blast: nome, personagens, arte, textos e código. Todos os direitos reservados. É proibido copiar ou modificar sem a permissão do autor.", privacy: "Política de privacidade",
   waitT: "Esperando o segundo jogador", waitP: "Você já está no mapa e o jogo está pausado. Envie o link ao outro jogador: a pausa termina assim que ele abrir.",
@@ -1392,7 +1455,8 @@ document.addEventListener('visibilitychange', () => { if (document.hidden && G.m
 /* fixed stick: the base never moves. Grab it and pull; the knob stretches after the thumb on a band, and the pull keeps steering however far the thumb wanders */
 const knob = $('knob'), stage = $('stage'), cv = $('cv'), band = $('band'), stickEl = $('stick');
 let stickId = null, sox = 0, soy = 0;
-const STRETCH = 92, DEAD = 10;
+const STRETCH = 92, DEAD = 13, AXIS_LOCK = 1.75;   // AXIS_LOCK: how clearly the thumb must cross a diagonal before the main direction changes
+const arrows = d => { for (let i = 0; i < 4; i++) $('arw' + i).classList.toggle('on', i === d); };
 function stickStart(ev) {
   const r = stickEl.getBoundingClientRect();
   stickId = ev.pointerId; sox = r.left + r.width / 2; soy = r.top + r.height / 2; touchDirs = [];
@@ -1400,21 +1464,26 @@ function stickStart(ev) {
 }
 function stickDrag(ev) {
   const dx = ev.clientX - sox, dy = ev.clientY - soy, m = Math.hypot(dx, dy);
-  const vis = Math.min(m, STRETCH), k = m > 0 ? vis / m : 0, th = Math.max(8, 18 - vis * .1);
-  knob.style.transform = `translate(${dx * k}px,${dy * k}px)`;
-  band.style.width = vis + 'px'; band.style.height = th + 'px'; band.style.marginTop = -th / 2 + 'px';
-  band.style.transform = `rotate(${Math.atan2(dy, dx)}rad)`;
-  if (m < DEAD) { touchDirs = []; return; }
+  const dp = document.body.classList.contains('dpad'), sc = +(stickEl.style.getPropertyValue('--sc')) || 1;
+  const vis = Math.min(m, STRETCH), k = m > 0 ? vis / m / sc : 0, th = Math.max(8, 18 - vis * .1);
+  if (!dp) {
+    knob.style.transform = `translate(${dx * k}px,${dy * k}px)`;
+    band.style.width = vis / sc + 'px'; band.style.height = th + 'px'; band.style.marginTop = -th / 2 + 'px';
+    band.style.transform = `rotate(${Math.atan2(dy, dx)}rad)`;
+  }
+  if (m < (touchDirs.length ? DEAD * .7 : DEAD)) { touchDirs = []; arrows(-1); return; }
   const ax = Math.abs(dx), ay = Math.abs(dy), hd = dx > 0 ? 1 : 3, vd = dy > 0 ? 2 : 0;
   let horFirst = ax > ay;
   const prev = touchDirs[0];
   // sticky axis: the main direction changes only when the thumb clearly crosses the diagonal
-  if (prev !== undefined) { const prevHor = prev === 1 || prev === 3; if (prevHor && ay < ax * 1.35) horFirst = true; if (!prevHor && ax < ay * 1.35) horFirst = false; }
+  if (prev !== undefined) { const prevHor = prev === 1 || prev === 3; if (prevHor && ay < ax * AXIS_LOCK) horFirst = true; if (!prevHor && ax < ay * AXIS_LOCK) horFirst = false; }
   const prim = horFirst ? hd : vd, sec = horFirst ? vd : hd, ratio = horFirst ? ay / ax : ax / ay;
+  if (dp) { touchDirs = [prim]; arrows(prim); return; }   // arrows: four directions, nothing in between
+  // the second direction joins only on a clear, long diagonal pull, and then stays until the thumb clearly leaves it
   const hadSec = touchDirs.length > 1;
-  touchDirs = ratio > (hadSec ? .4 : .55) ? [prim, sec] : [prim];
+  touchDirs = (hadSec ? ratio > .42 : ratio > .66 && m > 30) ? [prim, sec] : [prim];
 }
-function stickEnd() { stickId = null; touchDirs = []; knob.style.transform = ''; band.style.width = '0px'; }
+function stickEnd() { stickId = null; touchDirs = []; knob.style.transform = ''; band.style.width = '0px'; arrows(-1); }
 $('padZone').addEventListener('pointerdown', ev => {
   if (G.mode === 'menu' || G.paused) return;
   ev.preventDefault();
@@ -1425,6 +1494,60 @@ window.addEventListener('pointerup', ev => { if (ev.pointerId === stickId) stick
 window.addEventListener('pointercancel', ev => { if (ev.pointerId === stickId) stickEnd(); });
 $('bBomb').addEventListener('pointerdown', ev => { ev.preventDefault(); placeBomb(); });
 $('bDet').addEventListener('pointerdown', ev => { ev.preventDefault(); detonate(); });
+/* --- control settings: stick or arrows, framed or full-screen field, and where each control sits and how big it is --- */
+const CTL = { bomb: $('bBomb'), det: $('bDet'), pad: stickEl };
+const oriKey = () => (window.innerWidth > window.innerHeight ? 'l' : 'p');   // portrait and landscape keep separate arrangements
+const ctlSet = () => { const all = save.ctl || (save.ctl = {}), k = oriKey(); return all[k] || (all[k] = {}); };
+function applyCtl() {
+  const o = (save.ctl || {})[oriKey()] || {};
+  for (const k in CTL) {
+    const v = o[k] || [0, 0, 1], el = CTL[k];
+    el.style.setProperty('--dx', (v[0] || 0) + 'px'); el.style.setProperty('--dy', (v[1] || 0) + 'px'); el.style.setProperty('--sc', String(v[2] || 1));
+    const r = el.getBoundingClientRect();   // a control that would end up off the screen (another device, a rotated screen) goes back to its place
+    if (r.width > 0 && (r.right < 24 || r.bottom < 24 || r.left > window.innerWidth - 24 || r.top > window.innerHeight - 24)) { el.style.setProperty('--dx', '0px'); el.style.setProperty('--dy', '0px'); }
+  }
+  const arr = save.move === 'arrows', full = save.field === 'full';
+  document.body.classList.toggle('dpad', arr); document.body.classList.toggle('fullfield', full);
+  $('mvStick').setAttribute('aria-pressed', String(!arr)); $('mvArrows').setAttribute('aria-pressed', String(arr));
+  $('fdStd').setAttribute('aria-pressed', String(!full)); $('fdFull').setAttribute('aria-pressed', String(full));
+}
+let ctlBack = 'oMenu', arrSel = null, arrDrag = null;
+function openCtl() { ctlBack = OVERLAYS.find(o => o !== 'oCtl' && !$(o).hidden) || null; held.length = 0; stickEnd(); showOnly('oCtl'); }
+function closeCtl() { showOnly(ctlBack); resize(); }
+function setSel(k) { arrSel = k; for (const q in CTL) CTL[q].classList.toggle('sel', q === k); }
+function arrangeStart() { document.body.classList.add('arrange'); document.body.classList.remove('menu-open'); setSel(null); resize(); }
+function arrangeEnd() { document.body.classList.remove('arrange'); setSel(null); arrDrag = null; writeSave(save); showOnly('oCtl'); resize(); }
+function resizeSel(step) {
+  if (!arrSel) setSel('bomb');
+  const o = ctlSet(), v = o[arrSel] || [0, 0, 1];
+  v[2] = Math.round(Math.max(.6, Math.min(1.8, (v[2] || 1) + step)) * 10) / 10; o[arrSel] = v; applyCtl();
+}
+document.addEventListener('pointerdown', ev => {
+  if (!document.body.classList.contains('arrange')) return;
+  const k = Object.keys(CTL).find(q => CTL[q].contains(ev.target)) || ($('padZone').contains(ev.target) ? 'pad' : null);
+  if (!k) return;
+  ev.preventDefault(); ev.stopPropagation();   // while arranging, the controls do not play
+  const o = ctlSet(), v = o[k] || [0, 0, 1];
+  setSel(k); arrDrag = { k, id: ev.pointerId, x: ev.clientX, y: ev.clientY, v0: v.slice(), o };
+}, true);
+window.addEventListener('pointermove', ev => {
+  const d = arrDrag; if (!d || ev.pointerId !== d.id) return;
+  const el = CTL[d.k]; let nx = d.v0[0] + ev.clientX - d.x, ny = d.v0[1] + ev.clientY - d.y;
+  el.style.setProperty('--dx', nx + 'px'); el.style.setProperty('--dy', ny + 'px');
+  const r = el.getBoundingClientRect(), W0 = window.innerWidth, H0 = window.innerHeight;   // keep it on the screen
+  nx += Math.max(0, 4 - r.left) - Math.max(0, r.right - (W0 - 4)); ny += Math.max(0, 4 - r.top) - Math.max(0, r.bottom - (H0 - 4));
+  el.style.setProperty('--dx', nx + 'px'); el.style.setProperty('--dy', ny + 'px');
+  d.o[d.k] = [Math.round(nx), Math.round(ny), d.v0[2] || 1];
+});
+for (const type of ['pointerup', 'pointercancel']) window.addEventListener(type, ev => { if (arrDrag && ev.pointerId === arrDrag.id) arrDrag = null; });
+$('bCtlMenu').addEventListener('click', openCtl); $('bCtlPause').addEventListener('click', openCtl); $('bCtlClose').addEventListener('click', closeCtl);
+$('mvStick').addEventListener('click', () => { save.move = 'stick'; writeSave(save); applyCtl(); });
+$('mvArrows').addEventListener('click', () => { save.move = 'arrows'; writeSave(save); applyCtl(); });
+$('fdStd').addEventListener('click', () => { save.field = 'std'; writeSave(save); applyCtl(); });
+$('fdFull').addEventListener('click', () => { save.field = 'full'; writeSave(save); applyCtl(); });
+$('bArrange').addEventListener('click', arrangeStart); $('bArrDone').addEventListener('click', arrangeEnd);
+$('bArrMinus').addEventListener('click', () => resizeSel(-.1)); $('bArrPlus').addEventListener('click', () => resizeSel(.1));
+$('bArrReset').addEventListener('click', () => { (save.ctl || (save.ctl = {}))[oriKey()] = {}; setSel(null); applyCtl(); });
 function enableTouch() { if (!document.body.classList.contains('touch')) { document.body.classList.add('touch'); resize(); } }
 if (window.matchMedia && matchMedia('(pointer: coarse)').matches) document.body.classList.add('touch');
 window.addEventListener('touchstart', enableTouch, { passive: true });
@@ -1642,7 +1765,7 @@ function togglePause() {
 }
 
 /* ---------- overlays, menu, hud ---------- */
-const OVERLAYS = ['oMenu', 'oPause', 'oOver', 'oWin', 'oDuel', 'oWait'];
+const OVERLAYS = ['oMenu', 'oPause', 'oOver', 'oWin', 'oDuel', 'oWait', 'oCtl'];
 function showOnly(id) { for (const o of OVERLAYS) $(o).hidden = o !== id; document.body.classList.toggle('menu-open', !!id); }
 let banTimer = 0;
 function showBanner(t, s, sec) { $('banT').textContent = t; $('banS').textContent = s || ''; $('banS').hidden = !s; $('banner').classList.add('show'); clearTimeout(banTimer); banTimer = setTimeout(hideBanner, sec * 1000); }
@@ -1805,7 +1928,7 @@ function resize() {
   const r = stage.getBoundingClientRect(), dpr = Math.min(2, window.devicePixelRatio || 1);
   W = cv.width = Math.max(64, Math.round(r.width * dpr)); H = cv.height = Math.max(64, Math.round(r.height * dpr));
   TS = Math.floor(Math.max(20 * dpr, Math.min(H / ROWS_BASE, W / 7.5, 84 * dpr)));
-  ensureTiles(); snapCam(); sizeHero();
+  ensureTiles(); snapCam(); sizeHero(); applyCtl();
 }
 function camTarget() {
   const mw = COLS * TS, mh = ROWS * TS, p = G.player;
