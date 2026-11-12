@@ -1,16 +1,22 @@
 <!doctype html>
-<!-- Подрывник Искра. © 2026 Brozco Games. Все права защищены. Условия использования: файл LICENSE в репозитории https://github.com/nobodyin1991-boop/podryvnik-iskra -->
-<html lang="ru">
+<!-- Iskra Blast. © 2026 Brozco Games. All rights reserved. -->
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
-<meta name="description" content="Подрывник Искра: бумажная аркада с бомбами. 30 отсеков в одиночку и дуэль вдвоём по ссылке.">
+<meta name="description" content="Iskra Blast: a paper arcade with bombs. 30 bays solo and a duel for two, first to three wins.">
 <meta name="author" content="Brozco Games">
-<meta name="copyright" content="© 2026 Brozco Games. Все права защищены.">
+<meta name="copyright" content="© 2026 Brozco Games. All rights reserved.">
 <meta name="theme-color" content="#f0e7d3">
-<title>Подрывник Искра</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Golos+Text:wght@400;600&display=swap">
-<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}</style>
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Iskra Blast">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<title>Iskra Blast</title>
+<link rel="stylesheet" href="fonts/fonts.css">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}.legal a{color:inherit;font-weight:600}</style>
 </head>
 <body>
 <style>
@@ -116,6 +122,10 @@ button:focus-visible{outline:3px solid var(--teal); outline-offset:2px}
 #duelUrl{flex:1 1 220px; font-weight:400; font-size:13px}
 .status{margin:0; align-self:flex-start; font-weight:600; background:var(--ink); color:var(--paper); padding:4px 10px}
 .dim a{color:var(--ink); font-weight:600}
+.langs{grid-column:1/-1; display:flex; flex-wrap:wrap; gap:6px; justify-content:flex-end}
+.lang{background:#fffaf0; border:2px solid var(--ink); border-radius:4px; padding:4px 10px; font-size:13px; font-weight:600}
+.lang[aria-pressed="true"]{background:var(--ink); color:var(--paper)}
+.legal a{color:inherit; font-weight:600}
 .legal{grid-column:1/-1; margin:0; padding-top:12px; border-top:3px solid var(--ink); font-size:12px; line-height:1.5; color:var(--muted)}
 .how{display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:10px 28px}
 .how ul{margin:0; padding:0; list-style:none; display:flex; flex-direction:column; gap:6px; font-size:14px; line-height:1.4}
@@ -165,17 +175,17 @@ body.touch.menu-open .controls{display:none}
 </style>
 
 <header class="hud">
-  <div class="brand">ИСКРА</div>
-  <div class="stat"><span class="lbl">Отсек</span><b id="hLevel">01</b><span class="sub" id="hBiome">Ангар</span></div>
-  <div class="stat" id="hTimeBox"><span class="lbl">Время</span><b id="hTime">200</b></div>
-  <div class="stat"><span class="lbl">Счёт</span><b id="hScore">0</b></div>
-  <div class="stat"><span class="lbl">Жизни</span><b id="hLives">3</b></div>
-  <div class="stat"><span class="lbl">Бомбы</span><b id="hBombs">1</b></div>
-  <div class="stat"><span class="lbl">Дальн.</span><b id="hRange">1</b></div>
-  <div class="stat" id="hDetBox"><span class="lbl">Детон.</span><b id="hDet">нет</b></div>
+  <div class="brand" data-i18n="brand">ISKRA</div>
+  <div class="stat"><span class="lbl" data-i18n="hLevel">Bay</span><b id="hLevel">01</b><span class="sub" id="hBiome">Hangar</span></div>
+  <div class="stat" id="hTimeBox"><span class="lbl" data-i18n="hTime">Time</span><b id="hTime">200</b></div>
+  <div class="stat"><span class="lbl" data-i18n="hScore">Score</span><b id="hScore">0</b></div>
+  <div class="stat"><span class="lbl" data-i18n="hLives">Lives</span><b id="hLives">3</b></div>
+  <div class="stat"><span class="lbl" data-i18n="hBombs">Bombs</span><b id="hBombs">1</b></div>
+  <div class="stat"><span class="lbl" data-i18n="hRange">Range</span><b id="hRange">1</b></div>
+  <div class="stat" id="hDetBox"><span class="lbl" data-i18n="hDet">Deton.</span><b id="hDet">no</b></div>
   <div class="hud-btns">
-    <button id="bSound" type="button">Звук: вкл</button>
-    <button id="bPause" type="button">Пауза</button>
+    <button id="bSound" type="button">Sound: on</button>
+    <button id="bPause" type="button" data-i18n="pause">Pause</button>
   </div>
 </header>
 
@@ -186,53 +196,54 @@ body.touch.menu-open .controls{display:none}
 
   <section class="overlay menu" id="oMenu">
     <div class="poster">
-      <div class="hero"><canvas id="heroCv"></canvas><div class="stamp"><span><b>30</b>отсеков</span></div></div>
+      <div class="langs" id="langs" role="group" data-i18n-attr="aria-label:langAria" aria-label="Language"></div>
+      <div class="hero"><canvas id="heroCv"></canvas><div class="stamp"><span><b>30</b><span data-i18n="stampWord">bays</span></span></div></div>
       <div class="titleblock">
-        <p class="kicker"><span>Бумажная аркада с бомбами</span></p>
-        <h1>Подрывник <em>Искра</em></h1>
-        <p class="lead">Робот-курьер Искра расчищает заброшенную станцию. Взрывай ящики, ищи под ними улучшение и люк, прогони всех жильцов и уходи, пока не вышло время.</p>
-        <div class="row"><button class="btn primary" id="bPlay" type="button">Играть</button><button class="btn" id="bReset" type="button" hidden>Начать заново</button></div>
+        <p class="kicker"><span data-i18n="kicker">A paper arcade with bombs</span></p>
+        <h1 data-i18n-html="h1">Iskra <em>Blast</em></h1>
+        <p class="lead" data-i18n="lead">Iskra the courier robot is clearing an abandoned station. Blow up crates, find the upgrade and the hatch hidden under them, drive out every tenant and leave before time runs out.</p>
+        <div class="row"><button class="btn primary" id="bPlay" type="button">Play</button><button class="btn" id="bReset" type="button" hidden>Start over</button></div>
       </div>
 
       <div class="block" id="duelBlock">
-        <h3>Дуэль вдвоём</h3>
-        <p class="lead">Матч до трёх побед. Вы стартуете в противоположных углах, под ящиками лежат бомбы, дальность и по одному детонатору на половину карты. По карте бродят слизни, жуки и волчки. Раунд берёт тот, кто подорвёт соперника; каждый раунд на новой карте.</p>
+        <h3 data-i18n="duelH">Duel for two</h3>
+        <p class="lead" data-i18n="duelLead">A match to three wins. You start in opposite corners; bombs, range and one detonator per half of the map lie under the crates. Slimes, beetles and spinners roam the map. Whoever blows up the opponent takes the round, and every round is on a new map.</p>
         <div class="row">
-          <span class="seg" role="group" aria-label="Размер карты">
-            <button class="segb" id="mapStd" type="button" aria-pressed="true">Обычная карта</button>
-            <button class="segb" id="mapWide" type="button" aria-pressed="false">Широкая, в 1,5 раза</button>
+          <span class="seg" role="group" data-i18n-attr="aria-label:mapAria" aria-label="Map size">
+            <button class="segb" id="mapStd" type="button" aria-pressed="true" data-i18n="mapStd">Standard map</button>
+            <button class="segb" id="mapWide" type="button" aria-pressed="false" data-i18n="mapWide">Wide, 1.5×</button>
           </span>
         </div>
         <div class="row">
-          <button class="btn" id="bHost" type="button">Создать дуэль</button>
-          <span class="join" id="joinBox"><input id="joinCode" type="text" inputmode="latin" autocomplete="off" autocapitalize="characters" maxlength="5" placeholder="КОД" aria-label="Код комнаты"><button class="btn" id="bJoin" type="button">Войти по коду</button></span>
+          <button class="btn" id="bHost" type="button" data-i18n="host">Create duel</button>
+          <span class="join" id="joinBox"><input id="joinCode" type="text" inputmode="latin" autocomplete="off" autocapitalize="characters" maxlength="5" data-i18n-attr="placeholder:codePh;aria-label:codeAria" placeholder="CODE" aria-label="Room code"><button class="btn" id="bJoin" type="button" data-i18n="join">Join by code</button></span>
         </div>
         <p class="status" id="duelStatus" hidden></p>
-        <p class="dim" id="duelWhere">Карту выбирает тот, кто создаёт дуэль. Он сразу попадает на карту, игра стоит на паузе и показывает ссылку. Второй открывает ссылку или вводит код, и пауза снимается. Первому нельзя сворачивать страницу: игра идёт на его устройстве.</p>
+        <p class="dim" id="duelWhere" data-i18n="duelHint">Whoever creates the duel picks the map. They land on the map at once; the game stays paused and shows a link. The other player opens the link or types the code, and the pause lifts. The host must keep the page open: the game runs on their device.</p>
       </div>
 
       <div class="block">
-        <h3>Маршрут</h3>
+        <h3 data-i18n="routeH">Route</h3>
         <div class="route" id="route"></div>
         <p class="dim" id="routeHint"></p>
       </div>
 
       <div class="block">
-        <h3>Жильцы станции</h3>
+        <h3 data-i18n="tenantsH">Station tenants</h3>
         <div class="cards" id="bestiary"></div>
       </div>
 
       <div class="block">
-        <h3>Как играть</h3>
+        <h3 data-i18n="howH">How to play</h3>
         <div class="how">
           <ul>
-            <li><b>Телефон:</b> джойстик стоит справа внизу. Возьмись за него и тяни: ручка растягивается за пальцем и работает, даже когда палец ушёл далеко за край.</li>
-            <li><b>Бомба</b> и <b>Взрыв</b> в центре, рядом с джойстиком. Искра сама объезжает углы.</li>
+            <li data-i18n-html="how1"><b>Phone:</b> the stick sits at the bottom right. Grab it and pull: the knob stretches after your thumb and keeps working even when the thumb goes far past the edge.</li>
+            <li data-i18n-html="how2"><b>Bomb</b> and <b>Blast</b> are in the centre, next to the stick. Iskra drives around corners by herself.</li>
           </ul>
           <ul>
-            <li><b>Клавиатура:</b> <kbd>←↑↓→</kbd> или <kbd>WASD</kbd> ходить, <kbd>Пробел</kbd> бомба, <kbd>X</kbd> детонатор, <kbd>P</kbd> пауза.</li>
-            <li>В каждом отсеке одно улучшение: +1 к дальности взрыва или +1 бомба. Детонатор один на всю игру, спрятан в отсеке 06 и остаётся с тобой навсегда. Взрыв по открытому люку выпускает новых жильцов.</li>
-            <li>Жизней три, за каждый пятый отсек дают ещё одну. Кончились жизни — всё сбрасывается и маршрут начинается с первого отсека. С Литейной карты в полтора раза шире.</li>
+            <li data-i18n-html="how3"><b>Keyboard:</b> <kbd>←↑↓→</kbd> or <kbd>WASD</kbd> to move, <kbd>Space</kbd> bomb, <kbd>X</kbd> detonator, <kbd>P</kbd> pause.</li>
+            <li data-i18n="how4">Each bay hides one upgrade: +1 blast range or +1 bomb. There is a single detonator in the whole game: it is hidden in bay 06 and stays with you for good. Blasting an open hatch lets new tenants out.</li>
+            <li data-i18n="how5">You have three lives, and every fifth bay gives one more. When the lives run out everything resets and the route starts from bay one. From the Foundry on, maps are one and a half times wider.</li>
           </ul>
         </div>
       </div>
@@ -241,65 +252,65 @@ body.touch.menu-open .controls{display:none}
 
   <section class="overlay" id="oPause" hidden>
     <div class="sheet">
-      <h2 id="pauseTitle">Пауза</h2>
+      <h2 id="pauseTitle">Pause</h2>
       <div class="row">
-        <button class="btn primary" id="bResume" type="button">Дальше</button>
-        <button class="btn" id="bQuit" type="button">В меню</button>
+        <button class="btn primary" id="bResume" type="button" data-i18n="resume">Resume</button>
+        <button class="btn" id="bQuit" type="button" data-i18n="toMenu">Menu</button>
       </div>
     </div>
   </section>
 
   <section class="overlay" id="oOver" hidden>
     <div class="sheet">
-      <h2>Искра отключилась</h2>
+      <h2 data-i18n="overT">Iskra shut down</h2>
       <p id="overText"></p>
       <div class="row">
-        <button class="btn primary" id="bRetry" type="button">С первого отсека</button>
-        <button class="btn" id="bMenu1" type="button">В меню</button>
+        <button class="btn primary" id="bRetry" type="button" data-i18n="retry">From bay one</button>
+        <button class="btn" id="bMenu1" type="button" data-i18n="toMenu">Menu</button>
       </div>
 
-      <p class="legal">© 2026 Brozco Games. «Подрывник Искра»: название, персонажи, графика, тексты и код. Все права защищены. Копирование и переделка без согласия автора запрещены.</p>
+      <p class="legal"><span data-i18n="legal">© 2026 Brozco Games. Iskra Blast: name, characters, artwork, text and code. All rights reserved. Copying or reworking without the author’s consent is prohibited.</span> <a href="privacy.html" data-i18n="privacy">Privacy policy</a></p>
     </div>
   </section>
 
   <section class="overlay" id="oWait" hidden>
     <div class="sheet">
-      <h2>Ждём второго игрока</h2>
-      <p>Ты уже на карте, игра на паузе. Отправь ссылку второму: как только он её откроет, пауза снимется сама.</p>
+      <h2 data-i18n="waitT">Waiting for player two</h2>
+      <p data-i18n="waitP">You are already on the map and the game is paused. Send the link to the other player: the pause lifts as soon as they open it.</p>
       <div class="invite" id="duelInvite">
-        <input id="duelUrl" type="text" readonly aria-label="Ссылка-приглашение">
-        <button class="btn primary" id="bCopy" type="button">Скопировать ссылку</button>
+        <input id="duelUrl" type="text" readonly data-i18n-attr="aria-label:urlAria" aria-label="Invite link">
+        <button class="btn primary" id="bCopy" type="button">Copy link</button>
       </div>
-      <p>Или пусть введёт код в меню игры: <b class="code" id="waitCode"></b></p>
+      <p><span data-i18n="waitCodeP">Or let them type this code in the game menu:</span> <b class="code" id="waitCode"></b></p>
       <p class="status" id="waitStatus" hidden></p>
-      <div class="row"><button class="btn" id="bCancelWait" type="button">Отменить и выйти в меню</button></div>
+      <div class="row"><button class="btn" id="bCancelWait" type="button" data-i18n="cancelWait">Cancel and go to menu</button></div>
     </div>
   </section>
 
   <section class="overlay" id="oDuel" hidden>
     <div class="sheet">
-      <h2 id="duelTitle">Дуэль</h2>
+      <h2 id="duelTitle">Duel</h2>
       <p id="duelText"></p>
       <div class="row">
-        <button class="btn primary" id="bAgain" type="button">Реванш</button>
-        <button class="btn" id="bMenu3" type="button">В меню</button>
+        <button class="btn primary" id="bAgain" type="button">Rematch</button>
+        <button class="btn" id="bMenu3" type="button" data-i18n="toMenu">Menu</button>
       </div>
     </div>
   </section>
 
   <section class="overlay" id="oWin" hidden>
     <div class="sheet">
-      <h2>Станция свободна</h2>
+      <h2 data-i18n="winT">The station is clear</h2>
       <p id="winText"></p>
-      <div class="row"><button class="btn primary" id="bMenu2" type="button">В меню</button></div>
+      <div class="row"><button class="btn primary" id="bMenu2" type="button" data-i18n="toMenu">Menu</button></div>
     </div>
   </section>
 </main>
 
 <div class="controls" id="controls">
   <div class="act">
-    <button class="abtn det" id="bDet" type="button">Взрыв</button>
-    <button class="abtn bomb" id="bBomb" type="button">Бомба</button>
+    <button class="abtn det" id="bDet" type="button" data-i18n="btnDet">Blast</button>
+    <button class="abtn bomb" id="bBomb" type="button" data-i18n="btnBomb">Bomb</button>
   </div>
   <div class="stickwrap" id="padZone"><div class="stick" id="stick"><div class="band" id="band"></div><div class="knob" id="knob"></div></div></div>
 </div>
@@ -320,25 +331,24 @@ const pad2 = n => String(n).padStart(2, '0');
 
 /* each leg of the route is printed in its own pair of inks */
 const BIOMES = [
-  { name: 'Ангар',     floor: '#eadfc6', dot: '#d6c7a3', wall: '#35416b', face: '#1f2745', det: '#5567a0', crate: '#f2b233', cface: '#c4871a', text: CREAM, pat: 0 },
-  { name: 'Оранжерея', floor: '#dfe8cf', dot: '#c2d2a9', wall: '#2f6b4f', face: '#1c4532', det: '#519374', crate: '#e5432d', cface: '#a92a19', text: CREAM, pat: 1 },
-  { name: 'Ледник',    floor: '#dcebf0', dot: '#bcd6e1', wall: '#2b5fa8', face: '#1a3d75', det: '#5f92d6', crate: '#ffffff', cface: '#b4cfe3', text: CREAM, pat: 2 },
-  { name: 'Литейная',  floor: '#40323f', dot: '#52414f', wall: '#b5382a', face: '#782017', det: '#e2644f', crate: '#f2b233', cface: '#c4871a', text: CREAM, pat: 0 },
-  { name: 'Архив',     floor: '#eedbe0', dot: '#dcbdc6', wall: '#5a2f6b', face: '#3a1c47', det: '#8c59a2', crate: '#1f8a8c', cface: '#135d5e', text: CREAM, pat: 1 },
-  { name: 'Ядро',      floor: '#262335', dot: '#343048', wall: '#d9a520', face: '#946d0e', det: '#f6d262', crate: '#e5432d', cface: '#a92a19', text: INK, pat: 2 },
+  { key: 'b0', floor: '#eadfc6', dot: '#d6c7a3', wall: '#35416b', face: '#1f2745', det: '#5567a0', crate: '#f2b233', cface: '#c4871a', text: CREAM, pat: 0 },
+  { key: 'b1', floor: '#dfe8cf', dot: '#c2d2a9', wall: '#2f6b4f', face: '#1c4532', det: '#519374', crate: '#e5432d', cface: '#a92a19', text: CREAM, pat: 1 },
+  { key: 'b2', floor: '#dcebf0', dot: '#bcd6e1', wall: '#2b5fa8', face: '#1a3d75', det: '#5f92d6', crate: '#ffffff', cface: '#b4cfe3', text: CREAM, pat: 2 },
+  { key: 'b3', floor: '#40323f', dot: '#52414f', wall: '#b5382a', face: '#782017', det: '#e2644f', crate: '#f2b233', cface: '#c4871a', text: CREAM, pat: 0 },
+  { key: 'b4', floor: '#eedbe0', dot: '#dcbdc6', wall: '#5a2f6b', face: '#3a1c47', det: '#8c59a2', crate: '#1f8a8c', cface: '#135d5e', text: CREAM, pat: 1 },
+  { key: 'b5', floor: '#262335', dot: '#343048', wall: '#d9a520', face: '#946d0e', det: '#f6d262', crate: '#e5432d', cface: '#a92a19', text: INK, pat: 2 },
 ];
 const ETYPES = [null,
-  { name: 'Слизень',  speed: 1.3, wall: false, smart: 1, pts: 100,  turn: .2,  pips: 1, note: 'Бродит наугад и никуда не спешит.' },
-  { name: 'Жук',      speed: 1.9, wall: false, smart: 2, pts: 150,  turn: .25, pips: 2, note: 'Вблизи сворачивает к тебе.' },
-  { name: 'Волчок',   speed: 2.6, wall: false, smart: 1, pts: 250,  turn: .55, pips: 4, note: 'Носится и резко меняет курс.' },
-  { name: 'Дымка',    speed: 1.1, wall: true,  smart: 2, pts: 400,  turn: .3,  pips: 1, note: 'Медленно плывёт на тебя.' },
-  { name: 'Шершень',  speed: 2.8, wall: false, smart: 3, pts: 600,  turn: .3,  pips: 4, note: 'Гонится кратчайшим путём.' },
-  { name: 'Медуза',   speed: 1.8, wall: true,  smart: 3, pts: 900,  turn: .3,  pips: 2, note: 'Идёт к тебе напрямик.' },
-  { name: 'Фантом',   speed: 2.6, wall: true,  smart: 3, pts: 1300, turn: .3,  pips: 4, note: 'Быстрый охотник.' },
-  { name: 'Каратель', speed: 3.5, wall: true,  smart: 3, pts: 2000, turn: .3,  pips: 5, note: 'Быстрее тебя. Не опаздывай.' },
+  { name: 'Slime',  speed: 1.3, wall: false, smart: 1, pts: 100,  turn: .2,  pips: 1 },
+  { name: 'Beetle',      speed: 1.9, wall: false, smart: 2, pts: 150,  turn: .25, pips: 2 },
+  { name: 'Spinner',   speed: 2.6, wall: false, smart: 1, pts: 250,  turn: .55, pips: 4 },
+  { name: 'Mist',    speed: 1.1, wall: true,  smart: 2, pts: 400,  turn: .3,  pips: 1 },
+  { name: 'Hornet',  speed: 2.8, wall: false, smart: 3, pts: 600,  turn: .3,  pips: 4 },
+  { name: 'Jelly',   speed: 1.8, wall: true,  smart: 3, pts: 900,  turn: .3,  pips: 2 },
+  { name: 'Phantom',   speed: 2.6, wall: true,  smart: 3, pts: 1300, turn: .3,  pips: 4 },
+  { name: 'Punisher', speed: 3.5, wall: true,  smart: 3, pts: 2000, turn: .3,  pips: 5 },
 ];
 const UNLOCK = [0, 1, 3, 6, 9, 13, 17, 21], DET_LEVEL = 6;
-const ITEM_NAMES = { bomb: 'Бомба +1', range: 'Дальность +1', det: 'Детонатор', star: 'Бонус 3000' };
 
 /* ---------- saved progress (this browser only) ---------- */
 const SAVE_KEY = 'iskra-save-v1';
@@ -349,6 +359,270 @@ if (!save.cp) { save.cp = {}; if (save.level > 1) save.cp[save.level] = [save.bo
 save.max = Math.min(MAXL, Math.max(1, save.max | 0));
 if (!(save.lives >= 1)) save.lives = 3;
 function resetRun() { save.max = 1; save.cp = {}; save.lives = 3; save.score = 0; writeSave(save); }
+
+/* ---------- languages ----------
+   English is the base: any key missing in another language falls back to it. {0}, {1}… are filled in by t(). */
+const LANG_NAMES = { en: 'English', es: 'Español', zh: '中文', de: 'Deutsch', pt: 'Português', ru: 'Русский' };
+const TX = {
+en: {
+  title: "Iskra Blast", brand: "ISKRA", h1: "Iskra <em>Blast</em>", kicker: "A paper arcade with bombs", stampWord: "bays",
+  hLevel: "Bay", hTime: "Time", hScore: "Score", hLives: "Lives", hBombs: "Bombs", hRange: "Range", hDet: "Deton.", yes: "yes", no: "no",
+  soundOn: "Sound: on", soundOff: "Sound: off", pause: "Pause", langAria: "Language",
+  lead: "Iskra the courier robot is clearing an abandoned station. Blow up crates, find the upgrade and the hatch hidden under them, drive out every tenant and leave before time runs out.",
+  play: "Play", playCont: "Continue: bay {0}", reset: "Start over", resetSure: "Really reset everything?",
+  duelH: "Duel for two",
+  duelLead: "A match to three wins. You start in opposite corners; bombs, range and one detonator per half of the map lie under the crates. Slimes, beetles and spinners roam the map. Whoever blows up the opponent takes the round, and every round is on a new map.",
+  mapAria: "Map size", mapStd: "Standard map", mapWide: "Wide, 1.5×", host: "Create duel", codePh: "CODE", codeAria: "Room code", join: "Join by code",
+  duelHint: "Whoever creates the duel picks the map. They land on the map at once; the game stays paused and shows a link. The other player opens the link or types the code, and the pause lifts. The host must keep the page open: the game runs on their device.",
+  routeH: "Route", tenantsH: "Station tenants", howH: "How to play",
+  how1: "<b>Phone:</b> the stick sits at the bottom right. Grab it and pull: the knob stretches after your thumb and keeps working even when the thumb goes far past the edge.",
+  how2: "<b>Bomb</b> and <b>Blast</b> are in the centre, next to the stick. Iskra drives around corners by herself.",
+  how3: "<b>Keyboard:</b> <kbd>←↑↓→</kbd> or <kbd>WASD</kbd> to move, <kbd>Space</kbd> bomb, <kbd>X</kbd> detonator, <kbd>P</kbd> pause.",
+  how4: "Each bay hides one upgrade: +1 blast range or +1 bomb. There is a single detonator in the whole game: it is hidden in bay 06 and stays with you for good. Blasting an open hatch lets new tenants out.",
+  how5: "You have three lives, and every fifth bay gives one more. When the lives run out everything resets and the route starts from bay one. From the Foundry on, maps are one and a half times wider.",
+  pauseT: "Pause", leaveT: "Leave the duel?", resume: "Resume", toMenu: "Menu", overT: "Iskra shut down", retry: "From bay one", winT: "The station is clear",
+  legal: "© 2026 Brozco Games. Iskra Blast: name, characters, artwork, text and code. All rights reserved. Copying or reworking without the author’s consent is prohibited.", privacy: "Privacy policy",
+  waitT: "Waiting for player two", waitP: "You are already on the map and the game is paused. Send the link to the other player: the pause lifts as soon as they open it.",
+  urlAria: "Invite link", copy: "Copy link", copied: "Copied", copyManual: "Select and copy", waitCodeP: "Or let them type this code in the game menu:", cancelWait: "Cancel and go to menu",
+  duelT: "Duel", again: "Rematch", newMatch: "New match", waitHost: "Waiting for host…", btnDet: "Blast", btnBomb: "Bomb",
+  b0: "Hangar", b1: "Greenhouse", b2: "Glacier", b3: "Foundry", b4: "Archive", b5: "Core",
+  e1: "Slime", e2: "Beetle", e3: "Spinner", e4: "Mist", e5: "Hornet", e6: "Jelly", e7: "Phantom", e8: "Punisher",
+  n1: "Wanders at random, never in a hurry.", n2: "Turns towards you when close.", n3: "Darts about and changes course sharply.", n4: "Drifts slowly towards you.",
+  n5: "Chases you by the shortest path.", n6: "Heads straight for you.", n7: "A fast hunter.", n8: "Faster than you. Do not be late.",
+  iBomb: "Bomb +1", iRange: "Range +1", iDet: "Detonator", iStar: "Bonus 3000",
+  round: "Round {0}", youRedStart: "You are the red Iskra, top left. First to {0} wins", youTealStart: "You are the teal Iskra, bottom right. First to {0} wins", scoreIs: "Score {0}",
+  drawTime: "Draw: time is up", drawBoth: "Draw: both caught in the blast", roundWon: "The round is yours", roundLost: "The round goes to the opponent", scoreTo: "Score {0} · first to {1}",
+  matchWon: "The match is yours", matchLost: "Match lost", finalWon: "Final score {0}. The opponent was blown up three times.", finalLost: "Final score {0}. Rematch?",
+  guestLeftWait: "The other player disconnected. The room is still open, waiting again.", lostT: "Connection lost", lostP: "The opponent left or someone’s internet dropped.",
+  hostClosed: "The host closed the room. Ask them to create a new duel and send a new link.", srvLostWait: "Lost the connection to the server. Create the duel again.", srvLost: "You lost the connection to the server.",
+  netFail: "The duel server is not responding. Check your internet and try again.", netSandbox: "Network play is blocked on this page. Open the game at {0}", sandboxNote: "Network duels work in the hosted version of the game: ",
+  creating: "Creating a room…", roomOpen: "Room {0} is open.", code5: "The code has five letters.", connecting: "Connecting to room {0}…", knocking: "Knocking on room {0}…",
+  roomSilent: "Room {0} is not answering. Check the code: the host may have closed the page or created a new room.",
+  hatchOpen: "Hatch open", timeUp: "Time is up", punishers: "The Punishers are here", timeBonus: "Time bonus: +{0}", plusLife: " and +1 life", bayClear: "Bay cleared",
+  itemTaken: "upgrade already collected", hiddenItem: "hidden: {0}", bayBanner: "Bay {0} · {1}",
+  overText: "You ran out of lives in bay {0} of {1}. Score {2}, best {3}. The route, bombs, range and detonator are reset: everything starts from bay one.",
+  winText: "All {0} bays are cleared. Score {1}, best {2}.", wideTag: " · wide map",
+  routeHint: "You are in bay {0} of {1}, lives: {2}. When the lives run out, the route and all upgrades reset and you start again from bay one.", best: " Best: {0}.",
+  hudDuel: "duel", youRed: "you are red", youTeal: "you are teal", cardTime: "No. {0} · when time runs out", cardFrom: "No. {0} · from bay {1}", speed: "speed", thruCrates: "through crates",
+},
+ru: {
+  title: "Подрывник Искра", brand: "ИСКРА", h1: "Подрывник <em>Искра</em>", kicker: "Бумажная аркада с бомбами", stampWord: "отсеков",
+  hLevel: "Отсек", hTime: "Время", hScore: "Счёт", hLives: "Жизни", hBombs: "Бомбы", hRange: "Дальн.", hDet: "Детон.", yes: "есть", no: "нет",
+  soundOn: "Звук: вкл", soundOff: "Звук: выкл", pause: "Пауза", langAria: "Язык",
+  lead: "Робот-курьер Искра расчищает заброшенную станцию. Взрывай ящики, ищи под ними улучшение и люк, прогони всех жильцов и уходи, пока не вышло время.",
+  play: "Играть", playCont: "Продолжить: отсек {0}", reset: "Начать заново", resetSure: "Точно сбросить всё?",
+  duelH: "Дуэль вдвоём",
+  duelLead: "Матч до трёх побед. Вы стартуете в противоположных углах, под ящиками лежат бомбы, дальность и по одному детонатору на половину карты. По карте бродят слизни, жуки и волчки. Раунд берёт тот, кто подорвёт соперника; каждый раунд на новой карте.",
+  mapAria: "Размер карты", mapStd: "Обычная карта", mapWide: "Широкая, в 1,5 раза", host: "Создать дуэль", codePh: "КОД", codeAria: "Код комнаты", join: "Войти по коду",
+  duelHint: "Карту выбирает тот, кто создаёт дуэль. Он сразу попадает на карту, игра стоит на паузе и показывает ссылку. Второй открывает ссылку или вводит код, и пауза снимается. Первому нельзя сворачивать страницу: игра идёт на его устройстве.",
+  routeH: "Маршрут", tenantsH: "Жильцы станции", howH: "Как играть",
+  how1: "<b>Телефон:</b> джойстик стоит справа внизу. Возьмись за него и тяни: ручка растягивается за пальцем и работает, даже когда палец ушёл далеко за край.",
+  how2: "<b>Бомба</b> и <b>Взрыв</b> в центре, рядом с джойстиком. Искра сама объезжает углы.",
+  how3: "<b>Клавиатура:</b> <kbd>←↑↓→</kbd> или <kbd>WASD</kbd> ходить, <kbd>Пробел</kbd> бомба, <kbd>X</kbd> детонатор, <kbd>P</kbd> пауза.",
+  how4: "В каждом отсеке одно улучшение: +1 к дальности взрыва или +1 бомба. Детонатор один на всю игру, спрятан в отсеке 06 и остаётся с тобой навсегда. Взрыв по открытому люку выпускает новых жильцов.",
+  how5: "Жизней три, за каждый пятый отсек дают ещё одну. Кончились жизни — всё сбрасывается и маршрут начинается с первого отсека. С Литейной карты в полтора раза шире.",
+  pauseT: "Пауза", leaveT: "Выйти из дуэли?", resume: "Дальше", toMenu: "В меню", overT: "Искра отключилась", retry: "С первого отсека", winT: "Станция свободна",
+  legal: "© 2026 Brozco Games. «Подрывник Искра»: название, персонажи, графика, тексты и код. Все права защищены. Копирование и переделка без согласия автора запрещены.", privacy: "Политика конфиденциальности",
+  waitT: "Ждём второго игрока", waitP: "Ты уже на карте, игра на паузе. Отправь ссылку второму: как только он её откроет, пауза снимется сама.",
+  urlAria: "Ссылка-приглашение", copy: "Скопировать ссылку", copied: "Скопировано", copyManual: "Выдели и скопируй", waitCodeP: "Или пусть введёт код в меню игры:", cancelWait: "Отменить и выйти в меню",
+  duelT: "Дуэль", again: "Реванш", newMatch: "Новый матч", waitHost: "Ждём хоста…", btnDet: "Взрыв", btnBomb: "Бомба",
+  b0: "Ангар", b1: "Оранжерея", b2: "Ледник", b3: "Литейная", b4: "Архив", b5: "Ядро",
+  e1: "Слизень", e2: "Жук", e3: "Волчок", e4: "Дымка", e5: "Шершень", e6: "Медуза", e7: "Фантом", e8: "Каратель",
+  n1: "Бродит наугад и никуда не спешит.", n2: "Вблизи сворачивает к тебе.", n3: "Носится и резко меняет курс.", n4: "Медленно плывёт на тебя.",
+  n5: "Гонится кратчайшим путём.", n6: "Идёт к тебе напрямик.", n7: "Быстрый охотник.", n8: "Быстрее тебя. Не опаздывай.",
+  iBomb: "Бомба +1", iRange: "Дальность +1", iDet: "Детонатор", iStar: "Бонус 3000",
+  round: "Раунд {0}", youRedStart: "Ты красная Искра, слева вверху. Игра до {0} побед", youTealStart: "Ты бирюзовая Искра, справа внизу. Игра до {0} побед", scoreIs: "Счёт {0}",
+  drawTime: "Ничья: время вышло", drawBoth: "Ничья: оба под взрывом", roundWon: "Раунд твой", roundLost: "Раунд за соперником", scoreTo: "Счёт {0} · до {1} побед",
+  matchWon: "Матч твой", matchLost: "Матч проигран", finalWon: "Итоговый счёт {0}. Соперник подорван трижды.", finalLost: "Итоговый счёт {0}. Реванш?",
+  guestLeftWait: "Второй игрок отключился. Комната ещё открыта, ждём снова.", lostT: "Связь оборвалась", lostP: "Соперник вышел или у кого-то пропал интернет.",
+  hostClosed: "Хост закрыл комнату. Попроси его создать дуэль заново и прислать новую ссылку.", srvLostWait: "Пропало соединение с сервером. Создай дуэль заново.", srvLost: "У тебя пропало соединение с сервером.",
+  netFail: "Сервер дуэлей не отвечает. Проверь интернет и попробуй ещё раз.", netSandbox: "На этой странице сеть для дуэли закрыта. Открой игру по адресу {0}", sandboxNote: "Дуэль по сети работает в размещённой версии игры: ",
+  creating: "Создаём комнату…", roomOpen: "Комната {0} открыта.", code5: "В коде пять букв.", connecting: "Подключаемся к комнате {0}…", knocking: "Стучимся в комнату {0}…",
+  roomSilent: "Комната {0} не отвечает. Проверь код: возможно, хост закрыл страницу или создал новую комнату.",
+  hatchOpen: "Люк открыт", timeUp: "Время вышло", punishers: "Каратели уже здесь", timeBonus: "За время: +{0}", plusLife: " и +1 жизнь", bayClear: "Отсек свободен",
+  itemTaken: "улучшение уже собрано", hiddenItem: "спрятано: {0}", bayBanner: "Отсек {0} · {1}",
+  overText: "Жизни кончились в отсеке {0} из {1}. Счёт {2}, рекорд {3}. Маршрут, бомбы, дальность и детонатор сброшены: всё начинается с первого отсека.",
+  winText: "Все {0} отсеков пройдены. Счёт {1}, рекорд {2}.", wideTag: " · широкая карта",
+  routeHint: "Ты в отсеке {0} из {1}, жизней: {2}. Когда жизни кончатся, маршрут и все улучшения сбросятся, и идти придётся с первого отсека.", best: " Рекорд: {0}.",
+  hudDuel: "дуэль", youRed: "ты красная", youTeal: "ты бирюзовая", cardTime: "№{0} · когда выйдет время", cardFrom: "№{0} · с отсека {1}", speed: "ход", thruCrates: "сквозь ящики",
+},
+es: {
+  kicker: "Un arcade de papel con bombas", stampWord: "sectores",
+  hLevel: "Sector", hTime: "Tiempo", hScore: "Puntos", hLives: "Vidas", hBombs: "Bombas", hRange: "Alcance", hDet: "Deton.", yes: "sí", no: "no",
+  soundOn: "Sonido: sí", soundOff: "Sonido: no", pause: "Pausa", langAria: "Idioma",
+  lead: "Iskra, la robot mensajera, despeja una estación abandonada. Revienta cajas, encuentra la mejora y la escotilla ocultas debajo, echa a todos los inquilinos y sal antes de que se acabe el tiempo.",
+  play: "Jugar", playCont: "Continuar: sector {0}", reset: "Empezar de nuevo", resetSure: "¿Seguro que quieres borrar todo?",
+  duelH: "Duelo para dos",
+  duelLead: "Partida a tres victorias. Empezáis en esquinas opuestas; bajo las cajas hay bombas, alcance y un detonador por cada mitad del mapa. Por el mapa rondan babosas, escarabajos y peonzas. Gana la ronda quien haga volar al rival, y cada ronda se juega en un mapa nuevo.",
+  mapAria: "Tamaño del mapa", mapStd: "Mapa normal", mapWide: "Ancho, 1,5×", host: "Crear duelo", codePh: "CÓDIGO", codeAria: "Código de la sala", join: "Entrar con código",
+  duelHint: "Quien crea el duelo elige el mapa. Entra al mapa enseguida; el juego queda en pausa y muestra un enlace. El otro jugador abre el enlace o escribe el código y la pausa termina. El anfitrión no debe cerrar la página: el juego corre en su dispositivo.",
+  routeH: "Ruta", tenantsH: "Inquilinos de la estación", howH: "Cómo jugar",
+  how1: "<b>Móvil:</b> la palanca está abajo a la derecha. Agárrala y tira: el mando se estira tras tu pulgar y sigue funcionando aunque el pulgar se salga del borde.",
+  how2: "<b>Bomba</b> y <b>Explotar</b> están en el centro, junto a la palanca. Iskra rodea las esquinas sola.",
+  how3: "<b>Teclado:</b> <kbd>←↑↓→</kbd> o <kbd>WASD</kbd> para moverte, <kbd>Espacio</kbd> bomba, <kbd>X</kbd> detonador, <kbd>P</kbd> pausa.",
+  how4: "Cada sector esconde una mejora: +1 de alcance o +1 bomba. Solo hay un detonador en todo el juego: está en el sector 06 y se queda contigo para siempre. Volar una escotilla abierta suelta nuevos inquilinos.",
+  how5: "Tienes tres vidas y cada quinto sector da una más. Si te quedas sin vidas, todo se reinicia y la ruta empieza desde el sector uno. A partir de la Fundición los mapas son una vez y media más anchos.",
+  pauseT: "Pausa", leaveT: "¿Salir del duelo?", resume: "Seguir", toMenu: "Menú", overT: "Iskra se apagó", retry: "Desde el sector uno", winT: "La estación está despejada",
+  legal: "© 2026 Brozco Games. Iskra Blast: nombre, personajes, gráficos, textos y código. Todos los derechos reservados. Prohibido copiar o modificar sin permiso del autor.", privacy: "Política de privacidad",
+  waitT: "Esperando al segundo jugador", waitP: "Ya estás en el mapa y el juego está en pausa. Envía el enlace al otro jugador: la pausa termina en cuanto lo abra.",
+  urlAria: "Enlace de invitación", copy: "Copiar enlace", copied: "Copiado", copyManual: "Selecciona y copia", waitCodeP: "O que escriba este código en el menú del juego:", cancelWait: "Cancelar y volver al menú",
+  duelT: "Duelo", again: "Revancha", newMatch: "Nueva partida", waitHost: "Esperando al anfitrión…", btnDet: "Explotar", btnBomb: "Bomba",
+  b0: "Hangar", b1: "Invernadero", b2: "Glaciar", b3: "Fundición", b4: "Archivo", b5: "Núcleo",
+  e1: "Babosa", e2: "Escarabajo", e3: "Peonza", e4: "Bruma", e5: "Avispón", e6: "Medusa", e7: "Fantasma", e8: "Castigador",
+  n1: "Vaga sin rumbo y sin prisa.", n2: "De cerca gira hacia ti.", n3: "Corre y cambia de rumbo de golpe.", n4: "Flota despacio hacia ti.",
+  n5: "Te persigue por el camino más corto.", n6: "Va directa hacia ti.", n7: "Un cazador rápido.", n8: "Más rápido que tú. No llegues tarde.",
+  iBomb: "Bomba +1", iRange: "Alcance +1", iDet: "Detonador", iStar: "Bonus 3000",
+  round: "Ronda {0}", youRedStart: "Eres la Iskra roja, arriba a la izquierda. Gana quien llegue a {0}", youTealStart: "Eres la Iskra turquesa, abajo a la derecha. Gana quien llegue a {0}", scoreIs: "Marcador {0}",
+  drawTime: "Empate: se acabó el tiempo", drawBoth: "Empate: la explosión alcanzó a los dos", roundWon: "La ronda es tuya", roundLost: "La ronda es del rival", scoreTo: "Marcador {0} · a {1} victorias",
+  matchWon: "La partida es tuya", matchLost: "Partida perdida", finalWon: "Marcador final {0}. El rival voló tres veces.", finalLost: "Marcador final {0}. ¿Revancha?",
+  guestLeftWait: "El otro jugador se desconectó. La sala sigue abierta, esperamos de nuevo.", lostT: "Conexión perdida", lostP: "El rival salió o alguien se quedó sin internet.",
+  hostClosed: "El anfitrión cerró la sala. Pídele que cree otro duelo y te envíe un enlace nuevo.", srvLostWait: "Se perdió la conexión con el servidor. Crea el duelo otra vez.", srvLost: "Perdiste la conexión con el servidor.",
+  netFail: "El servidor de duelos no responde. Revisa tu internet e inténtalo de nuevo.", netSandbox: "En esta página el juego en red está bloqueado. Abre el juego en {0}", sandboxNote: "Los duelos en red funcionan en la versión alojada del juego: ",
+  creating: "Creando la sala…", roomOpen: "La sala {0} está abierta.", code5: "El código tiene cinco letras.", connecting: "Conectando con la sala {0}…", knocking: "Llamando a la sala {0}…",
+  roomSilent: "La sala {0} no responde. Revisa el código: quizá el anfitrión cerró la página o creó otra sala.",
+  hatchOpen: "Escotilla abierta", timeUp: "Se acabó el tiempo", punishers: "Los Castigadores ya están aquí", timeBonus: "Por tiempo: +{0}", plusLife: " y +1 vida", bayClear: "Sector despejado",
+  itemTaken: "mejora ya recogida", hiddenItem: "oculto: {0}", bayBanner: "Sector {0} · {1}",
+  overText: "Te quedaste sin vidas en el sector {0} de {1}. Puntos {2}, récord {3}. La ruta, las bombas, el alcance y el detonador se reinician: todo empieza desde el sector uno.",
+  winText: "Los {0} sectores están despejados. Puntos {1}, récord {2}.", wideTag: " · mapa ancho",
+  routeHint: "Estás en el sector {0} de {1}, vidas: {2}. Cuando se acaben las vidas, la ruta y todas las mejoras se reinician y vuelves al sector uno.", best: " Récord: {0}.",
+  hudDuel: "duelo", youRed: "eres la roja", youTeal: "eres la turquesa", cardTime: "N.º {0} · cuando se acaba el tiempo", cardFrom: "N.º {0} · desde el sector {1}", speed: "paso", thruCrates: "atraviesa cajas",
+},
+zh: {
+  kicker: "纸艺炸弹街机", stampWord: "个舱室",
+  hLevel: "舱室", hTime: "时间", hScore: "得分", hLives: "生命", hBombs: "炸弹", hRange: "范围", hDet: "引爆器", yes: "有", no: "无",
+  soundOn: "声音：开", soundOff: "声音：关", pause: "暂停", langAria: "语言",
+  lead: "快递机器人 Iskra 正在清理一座废弃空间站。炸开箱子，找到藏在下面的强化道具和舱口，赶走所有住户，在时间耗尽前离开。",
+  play: "开始", playCont: "继续：舱室 {0}", reset: "重新开始", resetSure: "确定要全部重置吗？",
+  duelH: "双人对决",
+  duelLead: "三胜制比赛。两人从对角出发，箱子下藏着炸弹、范围强化，地图每一半各有一个引爆器。地图上游荡着史莱姆、甲虫和陀螺。炸到对手的人赢得这一回合，每回合都换新地图。",
+  mapAria: "地图大小", mapStd: "标准地图", mapWide: "宽地图 1.5 倍", host: "创建对决", codePh: "代码", codeAria: "房间代码", join: "输入代码加入",
+  duelHint: "创建对决的人选择地图。他会立刻进入地图，游戏保持暂停并显示链接。另一位玩家打开链接或输入代码后，暂停自动解除。房主不能关闭或切走页面：游戏在他的设备上运行。",
+  routeH: "路线", tenantsH: "空间站住户", howH: "玩法",
+  how1: "<b>手机：</b>摇杆在右下角。按住并拖动：摇杆头会跟着拇指拉伸，即使拇指移到边缘之外也继续有效。",
+  how2: "<b>炸弹</b>和<b>引爆</b>按钮在中间，紧挨摇杆。Iskra 会自动绕过拐角。",
+  how3: "<b>键盘：</b><kbd>←↑↓→</kbd> 或 <kbd>WASD</kbd> 移动，<kbd>空格</kbd> 放炸弹，<kbd>X</kbd> 引爆，<kbd>P</kbd> 暂停。",
+  how4: "每个舱室藏着一个强化：爆炸范围 +1 或炸弹 +1。整个游戏只有一个引爆器：它藏在 06 号舱室，拿到后永久保留。炸到打开的舱口会放出新的住户。",
+  how5: "你有三条命，每过五个舱室再得一条。生命用完后一切重置，路线从第一个舱室重新开始。从“铸造厂”开始，地图宽度变为一倍半。",
+  pauseT: "暂停", leaveT: "退出对决？", resume: "继续", toMenu: "菜单", overT: "Iskra 关机了", retry: "从第一个舱室开始", winT: "空间站已清理完毕",
+  legal: "© 2026 Brozco Games。Iskra Blast：名称、角色、美术、文字与代码。保留所有权利。未经作者同意，禁止复制或改编。", privacy: "隐私政策",
+  waitT: "等待第二位玩家", waitP: "你已经在地图上，游戏处于暂停状态。把链接发给对方：他一打开，暂停就会解除。",
+  urlAria: "邀请链接", copy: "复制链接", copied: "已复制", copyManual: "请选中并复制", waitCodeP: "或者让对方在游戏菜单中输入这个代码：", cancelWait: "取消并返回菜单",
+  duelT: "对决", again: "再来一局", newMatch: "新比赛", waitHost: "等待房主…", btnDet: "引爆", btnBomb: "炸弹",
+  b0: "机库", b1: "温室", b2: "冰川", b3: "铸造厂", b4: "档案馆", b5: "核心",
+  e1: "史莱姆", e2: "甲虫", e3: "陀螺", e4: "薄雾", e5: "黄蜂", e6: "水母", e7: "幽灵", e8: "惩罚者",
+  n1: "漫无目的地闲逛，从不着急。", n2: "靠近时会转向你。", n3: "横冲直撞，突然变向。", n4: "慢慢向你飘来。",
+  n5: "沿最短路线追你。", n6: "径直朝你走来。", n7: "动作很快的猎手。", n8: "比你还快。别迟到。",
+  iBomb: "炸弹 +1", iRange: "范围 +1", iDet: "引爆器", iStar: "奖励 3000",
+  round: "第 {0} 回合", youRedStart: "你是红色 Iskra，在左上角。先赢 {0} 回合者获胜", youTealStart: "你是青色 Iskra，在右下角。先赢 {0} 回合者获胜", scoreIs: "比分 {0}",
+  drawTime: "平局：时间到", drawBoth: "平局：两人都被炸到", roundWon: "这一回合你赢了", roundLost: "这一回合对手赢了", scoreTo: "比分 {0} · 先到 {1} 胜",
+  matchWon: "你赢得了比赛", matchLost: "比赛失利", finalWon: "最终比分 {0}。对手被炸了三次。", finalLost: "最终比分 {0}。再来一局？",
+  guestLeftWait: "对方已断开连接。房间仍然开放，继续等待。", lostT: "连接中断", lostP: "对手离开了，或者有人断网了。",
+  hostClosed: "房主关闭了房间。请他重新创建对决并发送新链接。", srvLostWait: "与服务器的连接已断开。请重新创建对决。", srvLost: "你与服务器的连接已断开。",
+  netFail: "对决服务器没有响应。请检查网络后重试。", netSandbox: "此页面无法联网对决。请在此地址打开游戏：{0}", sandboxNote: "联网对决可在游戏的正式版本中使用：",
+  creating: "正在创建房间…", roomOpen: "房间 {0} 已开放。", code5: "代码为五个字母。", connecting: "正在连接房间 {0}…", knocking: "正在呼叫房间 {0}…",
+  roomSilent: "房间 {0} 没有回应。请检查代码：房主可能关闭了页面或创建了新房间。",
+  hatchOpen: "舱口已打开", timeUp: "时间到", punishers: "惩罚者来了", timeBonus: "时间奖励：+{0}", plusLife: "，生命 +1", bayClear: "舱室已清空",
+  itemTaken: "强化已拿到", hiddenItem: "隐藏道具：{0}", bayBanner: "舱室 {0} · {1}",
+  overText: "你在第 {0} 个舱室（共 {1} 个）用完了生命。得分 {2}，最高 {3}。路线、炸弹、范围和引爆器已重置：一切从第一个舱室开始。",
+  winText: "{0} 个舱室全部清空。得分 {1}，最高 {2}。", wideTag: " · 宽地图",
+  routeHint: "你在第 {0} 个舱室（共 {1} 个），生命：{2}。生命用完后，路线和所有强化都会重置，需要从第一个舱室重新开始。", best: " 最高分：{0}。",
+  hudDuel: "对决", youRed: "你是红色", youTeal: "你是青色", cardTime: "{0} 号 · 时间耗尽时出现", cardFrom: "{0} 号 · 从舱室 {1} 起", speed: "速度", thruCrates: "可穿过箱子",
+},
+de: {
+  kicker: "Ein Papier-Arcade mit Bomben", stampWord: "Sektoren",
+  hLevel: "Sektor", hTime: "Zeit", hScore: "Punkte", hLives: "Leben", hBombs: "Bomben", hRange: "Reichw.", hDet: "Zünder", yes: "ja", no: "nein",
+  soundOn: "Ton: an", soundOff: "Ton: aus", pause: "Pause", langAria: "Sprache",
+  lead: "Die Kurierroboterin Iskra räumt eine verlassene Station. Sprenge Kisten, finde das Upgrade und die Luke darunter, vertreibe alle Bewohner und verschwinde, bevor die Zeit abläuft.",
+  play: "Spielen", playCont: "Weiter: Sektor {0}", reset: "Neu anfangen", resetSure: "Wirklich alles zurücksetzen?",
+  duelH: "Duell zu zweit",
+  duelLead: "Ein Match bis drei Siege. Ihr startet in gegenüberliegenden Ecken; unter den Kisten liegen Bomben, Reichweite und je ein Zünder pro Kartenhälfte. Auf der Karte streifen Schleime, Käfer und Kreisel umher. Die Runde gewinnt, wer den Gegner sprengt, und jede Runde läuft auf einer neuen Karte.",
+  mapAria: "Kartengröße", mapStd: "Normale Karte", mapWide: "Breit, 1,5×", host: "Duell erstellen", codePh: "CODE", codeAria: "Raumcode", join: "Mit Code beitreten",
+  duelHint: "Wer das Duell erstellt, wählt die Karte. Er landet sofort auf der Karte; das Spiel bleibt pausiert und zeigt einen Link. Der zweite Spieler öffnet den Link oder gibt den Code ein, dann endet die Pause. Der Gastgeber darf die Seite nicht schließen: Das Spiel läuft auf seinem Gerät.",
+  routeH: "Route", tenantsH: "Bewohner der Station", howH: "So wird gespielt",
+  how1: "<b>Handy:</b> Der Stick sitzt unten rechts. Greif ihn und zieh: Der Knopf dehnt sich hinter deinem Daumen her und funktioniert auch, wenn der Daumen weit über den Rand hinausgeht.",
+  how2: "<b>Bombe</b> und <b>Zünden</b> liegen in der Mitte neben dem Stick. Iskra fährt von selbst um Ecken.",
+  how3: "<b>Tastatur:</b> <kbd>←↑↓→</kbd> oder <kbd>WASD</kbd> bewegen, <kbd>Leertaste</kbd> Bombe, <kbd>X</kbd> Zünder, <kbd>P</kbd> Pause.",
+  how4: "In jedem Sektor steckt ein Upgrade: +1 Reichweite oder +1 Bombe. Im ganzen Spiel gibt es nur einen Zünder: Er liegt in Sektor 06 und bleibt für immer bei dir. Wer eine offene Luke sprengt, lässt neue Bewohner heraus.",
+  how5: "Du hast drei Leben, jeder fünfte Sektor bringt eines dazu. Sind die Leben aufgebraucht, wird alles zurückgesetzt und die Route beginnt bei Sektor eins. Ab der Gießerei sind die Karten anderthalbmal so breit.",
+  pauseT: "Pause", leaveT: "Duell verlassen?", resume: "Weiter", toMenu: "Menü", overT: "Iskra hat sich abgeschaltet", retry: "Ab Sektor eins", winT: "Die Station ist frei",
+  legal: "© 2026 Brozco Games. Iskra Blast: Name, Figuren, Grafik, Texte und Code. Alle Rechte vorbehalten. Kopieren oder Bearbeiten ohne Zustimmung des Autors ist untersagt.", privacy: "Datenschutzerklärung",
+  waitT: "Warten auf Spieler zwei", waitP: "Du bist schon auf der Karte, das Spiel ist pausiert. Schick den Link an den anderen Spieler: Sobald er ihn öffnet, endet die Pause.",
+  urlAria: "Einladungslink", copy: "Link kopieren", copied: "Kopiert", copyManual: "Markieren und kopieren", waitCodeP: "Oder er gibt im Spielmenü diesen Code ein:", cancelWait: "Abbrechen und zum Menü",
+  duelT: "Duell", again: "Revanche", newMatch: "Neues Match", waitHost: "Warten auf den Gastgeber…", btnDet: "Zünden", btnBomb: "Bombe",
+  b0: "Hangar", b1: "Gewächshaus", b2: "Gletscher", b3: "Gießerei", b4: "Archiv", b5: "Kern",
+  e1: "Schleim", e2: "Käfer", e3: "Kreisel", e4: "Nebel", e5: "Hornisse", e6: "Qualle", e7: "Phantom", e8: "Bestrafer",
+  n1: "Streift ziellos umher und hat es nie eilig.", n2: "Dreht in deiner Nähe zu dir ab.", n3: "Saust herum und ändert abrupt die Richtung.", n4: "Treibt langsam auf dich zu.",
+  n5: "Jagt dich auf dem kürzesten Weg.", n6: "Kommt geradewegs auf dich zu.", n7: "Ein schneller Jäger.", n8: "Schneller als du. Komm nicht zu spät.",
+  iBomb: "Bombe +1", iRange: "Reichweite +1", iDet: "Zünder", iStar: "Bonus 3000",
+  round: "Runde {0}", youRedStart: "Du bist die rote Iskra, oben links. Wer zuerst {0} Siege hat, gewinnt", youTealStart: "Du bist die türkise Iskra, unten rechts. Wer zuerst {0} Siege hat, gewinnt", scoreIs: "Stand {0}",
+  drawTime: "Unentschieden: Zeit abgelaufen", drawBoth: "Unentschieden: beide in der Explosion", roundWon: "Die Runde gehört dir", roundLost: "Die Runde geht an den Gegner", scoreTo: "Stand {0} · bis {1} Siege",
+  matchWon: "Das Match gehört dir", matchLost: "Match verloren", finalWon: "Endstand {0}. Der Gegner wurde dreimal gesprengt.", finalLost: "Endstand {0}. Revanche?",
+  guestLeftWait: "Der andere Spieler hat die Verbindung getrennt. Der Raum ist noch offen, wir warten weiter.", lostT: "Verbindung verloren", lostP: "Der Gegner ist gegangen oder bei jemandem ist das Internet weg.",
+  hostClosed: "Der Gastgeber hat den Raum geschlossen. Bitte ihn, ein neues Duell zu erstellen und einen neuen Link zu schicken.", srvLostWait: "Die Verbindung zum Server ist weg. Erstelle das Duell erneut.", srvLost: "Du hast die Verbindung zum Server verloren.",
+  netFail: "Der Duell-Server antwortet nicht. Prüfe dein Internet und versuche es noch einmal.", netSandbox: "Auf dieser Seite ist das Netzwerkspiel gesperrt. Öffne das Spiel unter {0}", sandboxNote: "Netzwerkduelle funktionieren in der gehosteten Version des Spiels: ",
+  creating: "Raum wird erstellt…", roomOpen: "Raum {0} ist offen.", code5: "Der Code hat fünf Buchstaben.", connecting: "Verbinde mit Raum {0}…", knocking: "Klopfe bei Raum {0} an…",
+  roomSilent: "Raum {0} antwortet nicht. Prüfe den Code: Vielleicht hat der Gastgeber die Seite geschlossen oder einen neuen Raum erstellt.",
+  hatchOpen: "Luke offen", timeUp: "Zeit abgelaufen", punishers: "Die Bestrafer sind da", timeBonus: "Zeitbonus: +{0}", plusLife: " und +1 Leben", bayClear: "Sektor geräumt",
+  itemTaken: "Upgrade schon eingesammelt", hiddenItem: "versteckt: {0}", bayBanner: "Sektor {0} · {1}",
+  overText: "In Sektor {0} von {1} sind dir die Leben ausgegangen. Punkte {2}, Rekord {3}. Route, Bomben, Reichweite und Zünder sind zurückgesetzt: Alles beginnt bei Sektor eins.",
+  winText: "Alle {0} Sektoren sind geräumt. Punkte {1}, Rekord {2}.", wideTag: " · breite Karte",
+  routeHint: "Du bist in Sektor {0} von {1}, Leben: {2}. Sind die Leben aufgebraucht, werden Route und alle Upgrades zurückgesetzt und du beginnst wieder bei Sektor eins.", best: " Rekord: {0}.",
+  hudDuel: "Duell", youRed: "du bist rot", youTeal: "du bist türkis", cardTime: "Nr. {0} · wenn die Zeit abläuft", cardFrom: "Nr. {0} · ab Sektor {1}", speed: "Tempo", thruCrates: "durch Kisten",
+},
+pt: {
+  kicker: "Um arcade de papel com bombas", stampWord: "setores",
+  hLevel: "Setor", hTime: "Tempo", hScore: "Pontos", hLives: "Vidas", hBombs: "Bombas", hRange: "Alcance", hDet: "Deton.", yes: "sim", no: "não",
+  soundOn: "Som: ligado", soundOff: "Som: desligado", pause: "Pausa", langAria: "Idioma",
+  lead: "Iskra, a robô entregadora, está limpando uma estação abandonada. Exploda caixas, encontre a melhoria e a escotilha escondidas embaixo delas, expulse todos os moradores e saia antes que o tempo acabe.",
+  play: "Jogar", playCont: "Continuar: setor {0}", reset: "Começar de novo", resetSure: "Quer mesmo apagar tudo?",
+  duelH: "Duelo para dois",
+  duelLead: "Partida até três vitórias. Vocês começam em cantos opostos; sob as caixas há bombas, alcance e um detonador em cada metade do mapa. Pelo mapa andam lesmas, besouros e piões. Vence a rodada quem explodir o adversário, e cada rodada é em um mapa novo.",
+  mapAria: "Tamanho do mapa", mapStd: "Mapa normal", mapWide: "Largo, 1,5×", host: "Criar duelo", codePh: "CÓDIGO", codeAria: "Código da sala", join: "Entrar com código",
+  duelHint: "Quem cria o duelo escolhe o mapa. Ele entra no mapa na hora; o jogo fica pausado e mostra um link. O outro jogador abre o link ou digita o código e a pausa termina. O anfitrião não pode fechar a página: o jogo roda no aparelho dele.",
+  routeH: "Rota", tenantsH: "Moradores da estação", howH: "Como jogar",
+  how1: "<b>Celular:</b> o controle fica embaixo à direita. Segure e puxe: o botão estica atrás do seu polegar e continua funcionando mesmo quando o polegar passa da borda.",
+  how2: "<b>Bomba</b> e <b>Explodir</b> ficam no centro, ao lado do controle. Iskra contorna as esquinas sozinha.",
+  how3: "<b>Teclado:</b> <kbd>←↑↓→</kbd> ou <kbd>WASD</kbd> para andar, <kbd>Espaço</kbd> bomba, <kbd>X</kbd> detonador, <kbd>P</kbd> pausa.",
+  how4: "Cada setor esconde uma melhoria: +1 de alcance ou +1 bomba. Só existe um detonador no jogo inteiro: ele está no setor 06 e fica com você para sempre. Explodir uma escotilha aberta solta novos moradores.",
+  how5: "Você tem três vidas, e a cada cinco setores ganha mais uma. Quando as vidas acabam, tudo é reiniciado e a rota começa do setor um. A partir da Fundição, os mapas ficam uma vez e meia mais largos.",
+  pauseT: "Pausa", leaveT: "Sair do duelo?", resume: "Continuar", toMenu: "Menu", overT: "Iskra desligou", retry: "Do setor um", winT: "A estação está livre",
+  legal: "© 2026 Brozco Games. Iskra Blast: nome, personagens, arte, textos e código. Todos os direitos reservados. É proibido copiar ou modificar sem a permissão do autor.", privacy: "Política de privacidade",
+  waitT: "Esperando o segundo jogador", waitP: "Você já está no mapa e o jogo está pausado. Envie o link ao outro jogador: a pausa termina assim que ele abrir.",
+  urlAria: "Link de convite", copy: "Copiar link", copied: "Copiado", copyManual: "Selecione e copie", waitCodeP: "Ou peça para ele digitar este código no menu do jogo:", cancelWait: "Cancelar e voltar ao menu",
+  duelT: "Duelo", again: "Revanche", newMatch: "Nova partida", waitHost: "Esperando o anfitrião…", btnDet: "Explodir", btnBomb: "Bomba",
+  b0: "Hangar", b1: "Estufa", b2: "Geleira", b3: "Fundição", b4: "Arquivo", b5: "Núcleo",
+  e1: "Lesma", e2: "Besouro", e3: "Pião", e4: "Névoa", e5: "Vespão", e6: "Água-viva", e7: "Fantasma", e8: "Punidor",
+  n1: "Vaga sem rumo e sem pressa.", n2: "De perto, vira na sua direção.", n3: "Corre e muda de rumo de repente.", n4: "Flutua devagar até você.",
+  n5: "Persegue você pelo caminho mais curto.", n6: "Vai direto até você.", n7: "Um caçador rápido.", n8: "Mais rápido que você. Não se atrase.",
+  iBomb: "Bomba +1", iRange: "Alcance +1", iDet: "Detonador", iStar: "Bônus 3000",
+  round: "Rodada {0}", youRedStart: "Você é a Iskra vermelha, no canto superior esquerdo. Vence quem fizer {0} primeiro", youTealStart: "Você é a Iskra turquesa, no canto inferior direito. Vence quem fizer {0} primeiro", scoreIs: "Placar {0}",
+  drawTime: "Empate: o tempo acabou", drawBoth: "Empate: os dois na explosão", roundWon: "A rodada é sua", roundLost: "A rodada é do adversário", scoreTo: "Placar {0} · até {1} vitórias",
+  matchWon: "A partida é sua", matchLost: "Partida perdida", finalWon: "Placar final {0}. O adversário explodiu três vezes.", finalLost: "Placar final {0}. Revanche?",
+  guestLeftWait: "O outro jogador desconectou. A sala continua aberta, esperando de novo.", lostT: "Conexão perdida", lostP: "O adversário saiu ou alguém ficou sem internet.",
+  hostClosed: "O anfitrião fechou a sala. Peça para ele criar outro duelo e enviar um link novo.", srvLostWait: "A conexão com o servidor caiu. Crie o duelo de novo.", srvLost: "Você perdeu a conexão com o servidor.",
+  netFail: "O servidor de duelos não responde. Verifique sua internet e tente de novo.", netSandbox: "Nesta página o jogo em rede está bloqueado. Abra o jogo em {0}", sandboxNote: "Os duelos em rede funcionam na versão hospedada do jogo: ",
+  creating: "Criando a sala…", roomOpen: "A sala {0} está aberta.", code5: "O código tem cinco letras.", connecting: "Conectando à sala {0}…", knocking: "Chamando a sala {0}…",
+  roomSilent: "A sala {0} não responde. Confira o código: talvez o anfitrião tenha fechado a página ou criado outra sala.",
+  hatchOpen: "Escotilha aberta", timeUp: "O tempo acabou", punishers: "Os Punidores chegaram", timeBonus: "Bônus de tempo: +{0}", plusLife: " e +1 vida", bayClear: "Setor liberado",
+  itemTaken: "melhoria já coletada", hiddenItem: "escondido: {0}", bayBanner: "Setor {0} · {1}",
+  overText: "Suas vidas acabaram no setor {0} de {1}. Pontos {2}, recorde {3}. A rota, as bombas, o alcance e o detonador foram reiniciados: tudo começa do setor um.",
+  winText: "Todos os {0} setores estão livres. Pontos {1}, recorde {2}.", wideTag: " · mapa largo",
+  routeHint: "Você está no setor {0} de {1}, vidas: {2}. Quando as vidas acabarem, a rota e todas as melhorias são reiniciadas e você volta ao setor um.", best: " Recorde: {0}.",
+  hudDuel: "duelo", youRed: "você é a vermelha", youTeal: "você é a turquesa", cardTime: "N.º {0} · quando o tempo acaba", cardFrom: "N.º {0} · a partir do setor {1}", speed: "passo", thruCrates: "atravessa caixas",
+},
+};
+function pickLang() {
+  if (TX[save.lang]) return save.lang;
+  const prefs = (navigator.languages && navigator.languages.length ? navigator.languages : [navigator.language || 'en']);
+  for (const l of prefs) { const c = String(l).toLowerCase().slice(0, 2); if (TX[c]) return c; }
+  return 'en';
+}
+let LANG = pickLang();
+function t(key, ...a) {
+  let s = TX[LANG][key]; if (s === undefined) s = TX.en[key]; if (s === undefined) return key;
+  return a.length ? s.replace(/\{(\d)\}/g, (m, i) => a[+i]) : s;
+}
+const itemName = type => t({ bomb: 'iBomb', range: 'iRange', det: 'iDet', star: 'iStar' }[type]);
 
 /* ---------- sound ---------- */
 let AC = null, muted = !!save.muted;
@@ -452,7 +726,8 @@ function genLevel(L) {
 /* ---------- duel over the network ----------
    One browser hosts: it owns the map, the bombs, the fire and the tenants. Each player moves their own Искра
    locally (so steering stays instant) and reports the position; the host decides who picked what up and who got hit. */
-const DUEL_WINS = 3, PAGES_URL = 'https://nobodyin1991-boop.github.io/podryvnik-iskra/';
+const DUEL_WINS = 3, PAGES_URL = 'https://2-28-227-3.sslip.io/iskra/';
+const SANDBOX = /claude|anthropic/i.test(location.hostname);   // the Claude preview page blocks network sockets
 const V = { score: [0, 0], round: 1, wide: !!save.duelWide, nextT: 0, startAt: 0, on: false, role: null, peer: null, conn: null, items: [], rp: null, ev: [], sendT: 0, ending: false, endT: 0, eid: 1, code: '', timer: 0 };
 const r3 = v => Math.round(v * 1000) / 1000;
 function newPlayer(x, y, alt) { return { x, y, nx: x, ny: y, dir: 2, travel: 2, moving: false, anim: 0, inv: 2.5, dead: 0, alt, bombsMax: 1, range: 1, det: false }; }
@@ -503,14 +778,14 @@ function genDuel() {
 }
 function duelBegin(sub) {
   V.on = true; V.lastRx = Date.now(); G.mode = 'play'; G.paused = false; G.score = 0; G.bombsMax = 1; G.range = 1; G.det = false;
-  clearTimeout(V.timer); showOnly(null); ensureTiles(); snapCam(); showBanner('Раунд ' + V.round, sub, 2.6);
+  clearTimeout(V.timer); showOnly(null); ensureTiles(); snapCam(); showBanner(t('round', V.round), sub, 2.6);
 }
 /* the host steps onto the map at once; everything stands still until the second player arrives */
 function hostWait() {
   genDuel(); V.on = true; V.rp = null;
   G.player = newPlayer(1.5, 1.5, false); G.score = 0; G.bombsMax = 1; G.range = 1; G.det = false;
   G.mode = 'wait'; G.paused = false; ensureTiles(); snapCam(); hideBanner();
-  $('waitCode').textContent = V.code; $('bCopy').textContent = 'Скопировать ссылку'; $('duelInvite').hidden = false;
+  $('waitCode').textContent = V.code; $('bCopy').textContent = t('copy'); $('duelInvite').hidden = false;
   showOnly('oWait');
 }
 const scoreText = () => { const m = V.role === 'host' ? 0 : 1; return V.score[m] + ':' + V.score[1 - m]; };   // mine first
@@ -521,7 +796,7 @@ function duelStartHost(keepScore) {
   V.syncN = 30; V.startAt = Date.now();
   V.startMsg = { t: 'start', cols: COLS, rows: ROWS, level: G.level, time: G.time, sc: V.score, rd: V.round, grid: Array.from(G.grid.subarray(0, N)) };
   netSend(V.startMsg);
-  duelBegin(V.round === 1 ? 'Ты красная Искра, слева вверху. Игра до ' + DUEL_WINS + ' побед' : 'Счёт ' + scoreText());
+  duelBegin(V.round === 1 ? t('youRedStart', DUEL_WINS) : t('scoreIs', scoreText()));
 }
 function duelStartGuest(d) {
   clearInterval(V.helloT);
@@ -532,12 +807,12 @@ function duelStartGuest(d) {
   G.level = d.level; G.time = d.time; G.timeUp = true; G.shake = 0;
   V.score = Array.isArray(d.sc) ? [d.sc[0] | 0, d.sc[1] | 0] : [0, 0]; V.round = d.rd | 0 || 1;
   G.player = newPlayer(COLS - 1.5, ROWS - 1.5, true); V.rp = newPlayer(1.5, 1.5, false);
-  duelBegin(V.round === 1 ? 'Ты бирюзовая Искра, справа внизу. Игра до ' + DUEL_WINS + ' побед' : 'Счёт ' + scoreText());
+  duelBegin(V.round === 1 ? t('youTealStart', DUEL_WINS) : t('scoreIs', scoreText()));
 }
 function deathFx(x, y, mine) { for (let i = 0; i < 24; i++) confetti(x, y, pick([TEAL, CREAM, MUSTARD, RED]), 4); sfx.die(); if (mine) { buzz(120); stickEnd(); } }
 function itemFx(pl, type, mine) {
   const [x, y] = logicalPos(pl);
-  if (mine) { sfx.item(); buzz(20); pop(x, y - .5, ITEM_NAMES[type], CREAM); }
+  if (mine) { sfx.item(); buzz(20); pop(x, y - .5, itemName(type), CREAM); }
   for (let i = 0; i < 14; i++) confetti(x, y, pick([TEAL, MUSTARD]), 3);
 }
 function duelReveal(k) { for (const it of V.items) if (it.k === k && !it.revealed) { it.revealed = true; V.ev.push(['r', k, it.type]); } }
@@ -652,14 +927,14 @@ function duelResult(res, fin) {
   if (won) sfx.clear();
   if (!fin) {   // the round is over, the match goes on: a short breather, then the host deals a new map
     G.mode = 'between'; V.nextT = 3.4;
-    const why = res === 'draw' ? (G.time <= 0 ? 'Ничья: время вышло' : 'Ничья: оба под взрывом') : won ? 'Раунд твой' : 'Раунд за соперником';
-    showBanner(why, 'Счёт ' + st + ' · до ' + DUEL_WINS + ' побед', 3.2);
+    const why = res === 'draw' ? (G.time <= 0 ? t('drawTime') : t('drawBoth')) : won ? t('roundWon') : t('roundLost');
+    showBanner(why, t('scoreTo', st, DUEL_WINS), 3.2);
     return;
   }
   G.mode = 'over';
-  $('duelTitle').textContent = won ? 'Матч твой' : 'Матч проигран';
-  $('duelText').textContent = 'Итоговый счёт ' + st + (won ? '. Соперник подорван трижды.' : '. Реванш?');
-  $('bAgain').hidden = false; $('bAgain').textContent = 'Новый матч';
+  $('duelTitle').textContent = won ? t('matchWon') : t('matchLost');
+  $('duelText').textContent = (won ? t('finalWon', st) : t('finalLost', st));
+  $('bAgain').hidden = false; $('bAgain').textContent = t('newMatch');
   showOnly('oDuel');
 }
 function remoteBomb() {
@@ -698,12 +973,12 @@ function onDrop() {
   if (!V.conn) return;
   if (V.role === 'host') { V.conn = null; V.gid = null; }   // the room itself stays open
   else { const c = V.link; V.conn = null; V.link = null; clearInterval(V.helloT); clearTimeout(V.timer); try { c.close(); } catch (e) { /* already closed */ } }
-  if (G.mode === 'wait') { netStatus('Второй игрок отключился. Комната ещё открыта, ждём снова.'); return; }
+  if (G.mode === 'wait') { netStatus(t('guestLeftWait')); return; }
   if (V.on) {
     G.mode = 'over'; stickEnd();
-    $('duelTitle').textContent = 'Связь оборвалась'; $('duelText').textContent = 'Соперник вышел или у кого-то пропал интернет.'; $('bAgain').hidden = true;
+    $('duelTitle').textContent = t('lostT'); $('duelText').textContent = t('lostP'); $('bAgain').hidden = true;
     showOnly('oDuel');
-  } else netStatus('Хост закрыл комнату. Попроси его создать дуэль заново и прислать новую ссылку.');
+  } else netStatus(t('hostClosed'));
 }
 /* our own line to the relay went down */
 function linkLost() {
@@ -711,7 +986,7 @@ function linkLost() {
   if (V.on && G.mode !== 'over') {
     const waiting = G.mode === 'wait';
     G.mode = 'over'; stickEnd();
-    $('duelTitle').textContent = 'Связь оборвалась'; $('duelText').textContent = waiting ? 'Пропало соединение с сервером. Создай дуэль заново.' : 'У тебя пропало соединение с сервером.'; $('bAgain').hidden = true;
+    $('duelTitle').textContent = t('lostT'); $('duelText').textContent = waiting ? t('srvLostWait') : t('srvLost'); $('bAgain').hidden = true;
     showOnly('oDuel');
   } else if (!V.on) netFail();
 }
@@ -777,20 +1052,17 @@ const makeLink = (...a) => (window.IskraLink || mqttLink)(...a);
 const roomTopics = code => ({ h: 'iskra-duel/v1/' + code + '/h', g: 'iskra-duel/v1/' + code + '/g' });
 const relayOf = code => RELAYS[Math.max(0, Math.min(RELAYS.length - 1, Math.floor(CODE_ABC.indexOf(code[0]) / 8)))];
 function netStatus(t) { for (const id of ['duelStatus', 'waitStatus']) { $(id).textContent = t; $(id).hidden = !t; } }
-function netFail() {
-  const here = !/claude|anthropic/i.test(location.hostname);
-  netStatus(here || PAGES_URL.indexOf('http') !== 0 ? 'Сервер дуэлей не отвечает. Проверь интернет и попробуй ещё раз.' : 'На этой странице сеть для дуэли закрыта. Открой игру по адресу ' + PAGES_URL);
-}
+function netFail() { netStatus(SANDBOX ? t('netSandbox', PAGES_URL) : t('netFail')); }
 function hostDuel(tryN) {
   tryN = typeof tryN === 'number' ? tryN : 0;
   ac(); if (V.link) leaveDuel();
   if (tryN >= RELAYS.length) { netFail(); return; }
-  V.role = 'host'; netStatus('Создаём комнату…');
+  V.role = 'host'; netStatus(t('creating'));
   V.code = CODE_ABC[tryN * 8 + ri(8)]; for (let i = 0; i < 4; i++) V.code += CODE_ABC[ri(CODE_ABC.length)];
   const tp = roomTopics(V.code); let opened = false;
   const next = () => { if (V.link !== link || opened) return; link.close(); V.link = null; hostDuel(tryN + 1); };   // this relay is unreachable: try the next one
   const link = V.link = makeLink(RELAYS[tryN], tp.g, tp.h, {
-    up() { if (V.link !== link) return; opened = true; clearTimeout(V.timer); $('duelUrl').value = location.href.split('#')[0] + '#duel-' + V.code; hostWait(); netStatus('Комната ' + V.code + ' открыта.'); },
+    up() { if (V.link !== link) return; opened = true; clearTimeout(V.timer); $('duelUrl').value = location.href.split('#')[0] + '#duel-' + V.code; hostWait(); netStatus(t('roomOpen', V.code)); },
     msg(d) { if (V.link === link) onData(d); },
     down() { if (V.link !== link) return; if (opened) linkLost(); else next(); },
   });
@@ -798,13 +1070,13 @@ function hostDuel(tryN) {
 }
 function joinDuel(raw) {
   const code = String(raw || '').toUpperCase().replace(/[^A-Z]/g, '').slice(0, 5);
-  if (code.length < 5) { netStatus('В коде пять букв.'); return; }
+  if (code.length < 5) { netStatus(t('code5')); return; }
   ac(); if (V.link) leaveDuel();
-  V.role = 'guest'; V.myId = Math.random().toString(36).slice(2, 10); netStatus('Подключаемся к комнате ' + code + '…');
+  V.role = 'guest'; V.myId = Math.random().toString(36).slice(2, 10); netStatus(t('connecting', code));
   const tp = roomTopics(code); let opened = false;
   const hello = () => netSend({ t: 'hello' });
   const link = V.link = V.conn = makeLink(relayOf(code), tp.h, tp.g, {
-    up() { if (V.link !== link) return; opened = true; netStatus('Стучимся в комнату ' + code + '…'); hello(); V.helloT = setInterval(hello, 1000); },
+    up() { if (V.link !== link) return; opened = true; netStatus(t('knocking', code)); hello(); V.helloT = setInterval(hello, 1000); },
     msg(d) { if (V.link === link) onData(d); },
     down() { if (V.link !== link) return; if (opened) linkLost(); else { V.link = null; V.conn = null; clearTimeout(V.timer); netFail(); } },
   });
@@ -812,7 +1084,7 @@ function joinDuel(raw) {
   V.timer = setTimeout(() => {
     if (V.on || V.link !== link) return;
     clearInterval(V.helloT); link.close(); V.link = null; V.conn = null;
-    netStatus(opened ? 'Комната ' + code + ' не отвечает. Проверь код: возможно, хост закрыл страницу или создал новую комнату.' : 'Сервер дуэлей не отвечает. Проверь интернет и попробуй ещё раз.');
+    netStatus(opened ? t('roomSilent', code) : t('netFail'));
   }, 15000);
 }
 
@@ -1080,12 +1352,12 @@ function update(dt) {
     return;
   }
   const open = doorOpen();
-  if (open && !G.door.wasOpen) { G.door.wasOpen = true; sfx.door(); pop((G.door.k % COLS) + .5, Math.floor(G.door.k / COLS), 'Люк открыт', CREAM); }
+  if (open && !G.door.wasOpen) { G.door.wasOpen = true; sfx.door(); pop((G.door.k % COLS) + .5, Math.floor(G.door.k / COLS), t('hatchOpen'), CREAM); }
   if (!open) G.door.wasOpen = false;
   if (!G.timeUp) {
     G.time -= dt;
     if (G.time <= 0) {
-      G.time = 0; G.timeUp = true; sfx.alarm(); showBanner('Время вышло', 'Каратели уже здесь', 1.6);
+      G.time = 0; G.timeUp = true; sfx.alarm(); showBanner(t('timeUp'), t('punishers'), 1.6);
       const p = G.player, cells = [];
       for (let y = 1; y < ROWS - 1; y++) for (let x = 1; x < COLS - 1; x++) if (G.grid[idx(x, y)] === EMPTY && Math.abs(x - p.x) + Math.abs(y - p.y) >= 7) cells.push(idx(x, y));
       for (let i = 0; i < 5 && cells.length; i++) { const k = cells.splice(ri(cells.length), 1)[0]; spawnEnemy(8, k % COLS, Math.floor(k / COLS), .5); }
@@ -1143,15 +1415,15 @@ function takeItem() {
   else if (it.type === 'det') { G.det = true; for (const b of G.bombs) b.t = Infinity; }
   else G.score += 3000;
   G.score += 200; sfx.item(); buzz(20);
-  pop(G.player.x, G.player.y - .5, ITEM_NAMES[it.type], CREAM);
+  pop(G.player.x, G.player.y - .5, itemName(it.type), CREAM);
   for (let i = 0; i < 14; i++) confetti(G.player.x, G.player.y, pick([TEAL, MUSTARD]), 3);
 }
 function levelClear() {
   G.mode = 'clear'; G.modeT = 2.2; stickEnd();
   const bonus = Math.ceil(G.time) * 10; G.score += bonus;
-  let sub = 'За время: +' + bonus;
-  if (G.level % 5 === 0 && G.level < MAXL) { G.lives++; sub += ' и +1 жизнь'; }
-  showBanner('Отсек свободен', sub, 2.1); sfx.clear();
+  let sub = t('timeBonus', bonus);
+  if (G.level % 5 === 0 && G.level < MAXL) { G.lives++; sub += t('plusLife'); }
+  showBanner(t('bayClear'), sub, 2.1); sfx.clear();
 }
 function nextLevel() {
   if (G.level >= MAXL) { win(); return; }
@@ -1171,8 +1443,8 @@ function startLevel(checkpoint) {
     save.max = Math.max(save.max, G.level); save.lives = G.lives; save.score = G.score; writeSave(save);
   }
   G.mode = 'intro'; G.modeT = 1.7; G.paused = false;
-  const it = G.item.taken ? 'улучшение уже собрано' : 'спрятано: ' + ITEM_NAMES[G.item.type].toLowerCase();
-  showBanner('Отсек ' + pad2(G.level) + ' · ' + biomeOf(G.level).name, it, 1.6);
+  const it = G.item.taken ? t('itemTaken') : t('hiddenItem', itemName(G.item.type).toLowerCase());
+  showBanner(t('bayBanner', pad2(G.level), t(biomeOf(G.level).key)), it, 1.6);
   ensureTiles(); snapCam();
 }
 function continueRun() {
@@ -1185,13 +1457,13 @@ function continueRun() {
 function recordBest() { if (G.score > (save.best || 0)) { save.best = G.score; writeSave(save); } }
 function gameOver() {
   G.mode = 'over'; recordBest(); stickEnd();
-  $('overText').textContent = `Жизни кончились в отсеке ${pad2(G.level)} из ${MAXL}. Счёт ${G.score}, рекорд ${save.best || 0}. Маршрут, бомбы, дальность и детонатор сброшены: всё начинается с первого отсека.`;
+  $('overText').textContent = t('overText', pad2(G.level), MAXL, G.score, save.best || 0);
   resetRun();
   showOnly('oOver');
 }
 function win() {
   G.mode = 'win'; recordBest(); stickEnd();
-  $('winText').textContent = `Все ${MAXL} отсеков пройдены. Счёт ${G.score}, рекорд ${save.best || 0}.`;
+  $('winText').textContent = t('winText', MAXL, G.score, save.best || 0);
   resetRun();
   showOnly('oWin');
 }
@@ -1203,8 +1475,8 @@ function toMenu() {
 function togglePause() {
   if (G.mode !== 'play' && G.mode !== 'intro' && G.mode !== 'dying') return;
   // a duel cannot be frozen for one side only: the button offers to leave instead
-  if (V.on) { const open = !$('oPause').hidden; $('pauseTitle').textContent = 'Выйти из дуэли?'; held.length = 0; stickEnd(); showOnly(open ? null : 'oPause'); return; }
-  $('pauseTitle').textContent = 'Пауза';
+  if (V.on) { const open = !$('oPause').hidden; $('pauseTitle').textContent = t('leaveT'); held.length = 0; stickEnd(); showOnly(open ? null : 'oPause'); return; }
+  $('pauseTitle').textContent = t('pauseT');
   G.paused = !G.paused; held.length = 0; stickEnd(); showOnly(G.paused ? 'oPause' : null);
 }
 
@@ -1218,7 +1490,7 @@ function refreshMenu() {
   const box = $('route'); box.textContent = '';
   for (let b = 0; b < 6; b++) {
     const leg = document.createElement('div'), lab = document.createElement('span'), rowEl = document.createElement('div');
-    leg.className = 'leg'; lab.textContent = BIOMES[b].name + (b * 5 + 1 >= WIDE_FROM ? ' · широкая карта' : '');
+    leg.className = 'leg'; lab.textContent = t(BIOMES[b].key) + (b * 5 + 1 >= WIDE_FROM ? t('wideTag') : '');
     for (let i = 1; i <= 5; i++) {
       const L = b * 5 + i, bt = document.createElement('div');
       bt.className = 'lv' + (L === save.max ? ' sel' : L > save.max ? ' locked' : ''); bt.textContent = pad2(L);
@@ -1228,19 +1500,41 @@ function refreshMenu() {
     leg.appendChild(lab); leg.appendChild(rowEl); box.appendChild(leg);
   }
   const started = save.max > 1 || save.lives < 3;
-  $('bPlay').textContent = save.max > 1 ? 'Продолжить: отсек ' + pad2(save.max) : 'Играть';
-  $('bReset').hidden = !started; $('bReset').textContent = 'Начать заново'; resetArmed = false;
-  $('routeHint').textContent = `Ты в отсеке ${pad2(save.max)} из ${MAXL}, жизней: ${save.lives}. Когда жизни кончатся, маршрут и все улучшения сбросятся, и идти придётся с первого отсека.` + (save.best ? ` Рекорд: ${save.best}.` : '');
+  $('bPlay').textContent = save.max > 1 ? t('playCont', pad2(save.max)) : t('play');
+  $('bReset').hidden = !started; $('bReset').textContent = t('reset'); resetArmed = false;
+  $('routeHint').textContent = t('routeHint', pad2(save.max), MAXL, save.lives) + (save.best ? t('best', save.best) : '');
+}
+function buildLangs() {
+  const box = $('langs'); box.textContent = '';
+  for (const code of Object.keys(LANG_NAMES)) {
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'lang'; b.id = 'lang-' + code; b.lang = code; b.textContent = LANG_NAMES[code];
+    b.setAttribute('aria-pressed', String(code === LANG)); b.addEventListener('click', () => setLang(code)); box.appendChild(b);
+  }
+}
+function setLang(code) { if (!TX[code]) return; LANG = code; save.lang = code; writeSave(save); applyLang(); }
+/* writes the current language into every static label, then lets the dynamic ones redraw themselves */
+function applyLang() {
+  document.documentElement.lang = LANG === 'zh' ? 'zh-Hans' : LANG; document.title = t('title');
+  for (const el of document.querySelectorAll('[data-i18n]')) el.textContent = t(el.dataset.i18n);
+  for (const el of document.querySelectorAll('[data-i18n-html]')) el.innerHTML = t(el.dataset.i18nHtml);
+  for (const el of document.querySelectorAll('[data-i18n-attr]')) for (const pair of el.dataset.i18nAttr.split(';')) { const [a, k] = pair.split(':'); el.setAttribute(a, t(k)); }
+  for (const k in hudCache) delete hudCache[k];
+  $('pauseTitle').textContent = t(V.on ? 'leaveT' : 'pauseT'); $('duelTitle').textContent = t('duelT'); $('bAgain').textContent = t('again'); $('bCopy').textContent = t('copy');
+  soundLabel(); refreshMenu(); buildBestiary(); buildLangs();
+  if (SANDBOX) {   // inside the preview the duel cannot connect: point to the hosted game instead
+    const a = document.createElement('a'); a.href = PAGES_URL; a.target = '_blank'; a.rel = 'noopener'; a.textContent = PAGES_URL;
+    $('duelWhere').textContent = t('sandboxNote'); $('duelWhere').appendChild(a);
+  }
 }
 const hudCache = {};
 function setHud(id, v) { if (hudCache[id] !== v) { hudCache[id] = v; $(id).textContent = v; } }
 function updateHud() {
   const L = G.mode === 'menu' ? save.max : G.level;
-  if (V.on) { setHud('hLevel', 'дуэль'); setHud('hBiome', V.role === 'host' ? 'ты красная' : 'ты бирюзовая'); }
-  else { setHud('hLevel', pad2(L) + '/' + MAXL); setHud('hBiome', biomeOf(L).name); }
+  if (V.on) { setHud('hLevel', t('hudDuel')); setHud('hBiome', V.role === 'host' ? t('youRed') : t('youTeal')); }
+  else { setHud('hLevel', pad2(L) + '/' + MAXL); setHud('hBiome', t(biomeOf(L).key)); }
   const menu = G.mode === 'menu';
   setHud('hTime', String(Math.ceil(G.time))); setHud('hScore', V.on ? scoreText() : String(menu ? save.score | 0 : G.score)); setHud('hLives', String(V.on ? (G.player.dead ? 0 : 1) : menu ? save.lives : Math.max(0, G.lives)));
-  setHud('hBombs', String(G.bombsMax)); setHud('hRange', String(G.range)); setHud('hDet', G.det ? 'есть' : 'нет');
+  setHud('hBombs', String(G.bombsMax)); setHud('hRange', String(G.range)); setHud('hDet', G.det ? t('yes') : t('no'));
   const low = G.time <= 30 && G.mode !== 'menu';
   if (hudCache.low !== low) { hudCache.low = low; $('hTimeBox').classList.toggle('low', low); }
   if (hudCache.det !== G.det) { hudCache.det = G.det; $('hDetBox').classList.toggle('on', G.det); $('bDet').classList.toggle('on', G.det); }
@@ -1248,7 +1542,7 @@ function updateHud() {
 $('bPlay').addEventListener('click', continueRun);
 let resetArmed = false;
 $('bReset').addEventListener('click', () => {   // two taps: the first one only asks
-  if (!resetArmed) { resetArmed = true; $('bReset').textContent = 'Точно сбросить всё?'; return; }
+  if (!resetArmed) { resetArmed = true; $('bReset').textContent = t('resetSure'); return; }
   resetRun(); refreshMenu();
 });
 $('bResume').addEventListener('click', togglePause);
@@ -1267,15 +1561,15 @@ $('bJoin').addEventListener('click', () => joinDuel($('joinCode').value));
 $('joinCode').addEventListener('keydown', ev => { ev.stopPropagation(); if (ev.key === 'Enter') joinDuel($('joinCode').value); });
 $('bAgain').addEventListener('click', () => {
   if (V.role === 'host') { if (V.conn) duelStartHost(); }
-  else { netSend({ t: 'again' }); $('bAgain').textContent = 'Ждём хоста…'; }
+  else { netSend({ t: 'again' }); $('bAgain').textContent = t('waitHost'); }
 });
 $('bCopy').addEventListener('click', () => {
-  const inp = $('duelUrl'), done = () => { $('bCopy').textContent = 'Скопировано'; };
-  const fallback = () => { inp.focus(); inp.select(); $('bCopy').textContent = 'Выдели и скопируй'; };
+  const inp = $('duelUrl'), done = () => { $('bCopy').textContent = t('copied'); };
+  const fallback = () => { inp.focus(); inp.select(); $('bCopy').textContent = t('copyManual'); };
   try { navigator.clipboard.writeText(inp.value).then(done, fallback); } catch (e) { fallback(); }
 });
 $('bPause').addEventListener('click', ev => { ev.currentTarget.blur(); togglePause(); });
-function soundLabel() { $('bSound').textContent = muted ? 'Звук: выкл' : 'Звук: вкл'; }
+function soundLabel() { $('bSound').textContent = muted ? t('soundOff') : t('soundOn'); }
 $('bSound').addEventListener('click', ev => { muted = !muted; save.muted = muted; writeSave(save); soundLabel(); ev.currentTarget.blur(); });
 soundLabel();
 
@@ -1623,38 +1917,34 @@ function frame(now) {
   for (let i = 0; i < 500; i++) { x.fillStyle = `rgba(255,250,240,${rnd(.12)})`; x.fillRect(ri(160), ri(160), 1, 1 + ri(2)); }
   try { $('grain').style.backgroundImage = `url(${c.toDataURL()})`; } catch (e) { /* decorative only */ }
 })();
-(function bestiary() {
-  const box = $('bestiary');
+function buildBestiary() {
+  const box = $('bestiary'); box.textContent = '';
   for (let i = 1; i <= 8; i++) {
     const T = ETYPES[i], d = document.createElement('div'); d.className = 'cardlet';
     const c = mk(160, 160), x = c.getContext('2d'); drawEnemy(x, i, 80, 78, 150, 1.3, 2, 0);
     const no = document.createElement('span'), nm = document.createElement('strong'), pips = document.createElement('span'), nt = document.createElement('small');
-    no.className = 'no'; no.textContent = '№' + i + (i === 8 ? ' · когда выйдет время' : ' · с отсека ' + pad2(UNLOCK[i]));
-    nm.textContent = T.name; nt.textContent = T.note;
-    pips.className = 'pips'; pips.appendChild(document.createTextNode('ход'));
+    no.className = 'no'; no.textContent = (i === 8 ? t('cardTime', i) : t('cardFrom', i, pad2(UNLOCK[i])));
+    nm.textContent = t('e' + i); nt.textContent = t('n' + i);
+    pips.className = 'pips'; pips.appendChild(document.createTextNode(t('speed')));
     for (let k = 1; k <= 5; k++) { const p = document.createElement('i'); if (k <= T.pips) p.className = 'f'; pips.appendChild(p); }
     d.appendChild(c); d.appendChild(no); d.appendChild(nm); d.appendChild(pips);
-    if (T.wall) { const tg = document.createElement('span'); tg.className = 'tag'; tg.textContent = 'сквозь ящики'; d.appendChild(tg); }
+    if (T.wall) { const tg = document.createElement('span'); tg.className = 'tag'; tg.textContent = t('thruCrates'); d.appendChild(tg); }
     d.appendChild(nt); box.appendChild(d);
   }
-})();
+}
 document.body.classList.add('menu-open');
-refreshMenu(); resize();
+applyLang(); resize();
 if (window.ResizeObserver) new ResizeObserver(resize).observe(stage); else window.addEventListener('resize', resize);
 requestAnimationFrame(frame);
 window.__iskra = G;
 window.addEventListener('pagehide', () => { if (V.conn) netSend({ t: 'bye' }); });
 (function duelBoot() {
-  const here = !/claude|anthropic/i.test(location.hostname);
-  if (!here && PAGES_URL.indexOf('http') === 0) {
-    const a = document.createElement('a'); a.href = PAGES_URL; a.target = '_blank'; a.rel = 'noopener'; a.textContent = PAGES_URL;
-    $('duelWhere').textContent = 'Дуэль по сети работает в версии игры на GitHub: '; $('duelWhere').appendChild(a);
-  }
   const m = /^#duel-([A-Za-z]{5})$/.exec(location.hash || '');
   if (m) { $('joinCode').value = m[1].toUpperCase(); joinDuel(m[1]); try { $('duelBlock').scrollIntoView(); } catch (e) { /* not essential */ } }
 })();
 })();
 </script>
 
+<script>if('serviceWorker' in navigator && location.protocol==='https:'){window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js').catch(()=>{})})}</script>
 </body>
 </html>
