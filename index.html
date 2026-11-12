@@ -726,9 +726,15 @@ function leaveDuel() {
 /* --- the line between the two players ---
    Browsers on a phone network and on a home router often cannot reach each other directly, so both simply talk to a
    public MQTT relay over an ordinary secure web socket. Below is the small part of MQTT 3.1.1 the game needs. */
-const RELAYS = ['wss://broker.hivemq.com:8884/mqtt', 'wss://test.mosquitto.org:8081/'];
+// Our own relay comes first; the public test brokers are only a fallback if it cannot be reached.
+// The relay login is not a secret (it ships to every browser); on the server it is limited to the game topics.
+const RELAYS = [
+  { u: 'wss://2-28-227-3.sslip.io/mqtt', n: 'games', p: 'n7VbJPv0rL4KmkisEtNw' },
+  { u: 'wss://broker.hivemq.com:8884/mqtt' },
+  { u: 'wss://test.mosquitto.org:8081/' },
+];
 const CODE_ABC = 'ABCDEFGHJKLMNPQRSTUVWXYZ';   // the first letter of a room code says which relay the room lives on
-function mqttLink(url, subTopic, pubTopic, hd) {
+function mqttLink(relay, subTopic, pubTopic, hd) {
   const enc = new TextEncoder(), dec = new TextDecoder();
   const str = s => { const b = enc.encode(s); return [b.length >> 8, b.length & 255, ...b]; };
   const packet = (type, body) => {
@@ -748,9 +754,9 @@ function mqttLink(url, subTopic, pubTopic, hd) {
     close() { closed = true; link.up = false; clearInterval(ping); try { ws.close(); } catch (e) { /* never opened */ } },
   };
   const down = () => { if (closed) return; closed = true; link.up = false; clearInterval(ping); hd.down(); };
-  try { ws = new WebSocket(url, 'mqtt'); } catch (e) { setTimeout(down, 0); return link; }
+  try { ws = new WebSocket(relay.u, 'mqtt'); } catch (e) { setTimeout(down, 0); return link; }
   ws.binaryType = 'arraybuffer';
-  ws.onopen = () => ws.send(packet(0x10, Uint8Array.from([...str('MQTT'), 4, 2, 0, 30, ...str('iskra' + Math.random().toString(36).slice(2, 12))])));
+  ws.onopen = () => ws.send(packet(0x10, Uint8Array.from([...str('MQTT'), 4, relay.n ? 0xC2 : 2, 0, 30, ...str('iskra' + Math.random().toString(36).slice(2, 12)), ...(relay.n ? [...str(relay.n), ...str(relay.p)] : [])])));
   ws.onmessage = ev => {
     const inc = new Uint8Array(ev.data), m = new Uint8Array(buf.length + inc.length); m.set(buf); m.set(inc, buf.length); buf = m;
     for (;;) {
@@ -772,7 +778,7 @@ const roomTopics = code => ({ h: 'iskra-duel/v1/' + code + '/h', g: 'iskra-duel/
 const relayOf = code => RELAYS[Math.max(0, Math.min(RELAYS.length - 1, Math.floor(CODE_ABC.indexOf(code[0]) / 8)))];
 function netStatus(t) { for (const id of ['duelStatus', 'waitStatus']) { $(id).textContent = t; $(id).hidden = !t; } }
 function netFail() {
-  const here = /github\.io$|^localhost$|^127\.0\.0\.1$/.test(location.hostname);
+  const here = !/claude|anthropic/i.test(location.hostname);
   netStatus(here || PAGES_URL.indexOf('http') !== 0 ? 'Сервер дуэлей не отвечает. Проверь интернет и попробуй ещё раз.' : 'На этой странице сеть для дуэли закрыта. Открой игру по адресу ' + PAGES_URL);
 }
 function hostDuel(tryN) {
@@ -1639,7 +1645,7 @@ requestAnimationFrame(frame);
 window.__iskra = G;
 window.addEventListener('pagehide', () => { if (V.conn) netSend({ t: 'bye' }); });
 (function duelBoot() {
-  const here = /github\.io$|^localhost$|^127\.0\.0\.1$/.test(location.hostname);
+  const here = !/claude|anthropic/i.test(location.hostname);
   if (!here && PAGES_URL.indexOf('http') === 0) {
     const a = document.createElement('a'); a.href = PAGES_URL; a.target = '_blank'; a.rel = 'noopener'; a.textContent = PAGES_URL;
     $('duelWhere').textContent = 'Дуэль по сети работает в версии игры на GitHub: '; $('duelWhere').appendChild(a);
