@@ -840,7 +840,7 @@ const scoreText = () => {   // two players: mine first; more: in slot order (red
   return act.map(s => V.score[s]).join(':');
 };
 function duelBegin() {
-  V.on = true; V.lastRx = Date.now(); G.mode = 'play'; G.paused = false; G.score = 0; G.bombsMax = 1; G.range = 1; G.det = false;
+  V.on = true; V.pend = []; V.lastRx = Date.now(); G.mode = 'play'; G.paused = false; G.score = 0; G.bombsMax = 1; G.range = 1; G.det = false;
   clearTimeout(V.timer); showOnly(null); ensureTiles(); snapCam();
   showBanner(t('round', V.round), V.round === 1 ? t('youAre', t('c' + V.me), DUEL_WINS) : t('scoreIs', scoreText()), 2.6);
 }
@@ -907,11 +907,12 @@ function sendSnapshot() {
     b: G.bombs.map(b => [b.cx, b.cy, b.t === Infinity ? -1 : r3(b.t), r3(b.age), b.o || 0]),
     ev: V.ev.splice(0) };
   // every couple of seconds the whole map goes along, so one lost message can never leave the screens different
-  if (--V.syncN <= 0) { V.syncN = 30; msg.gr = Array.from(G.grid.subarray(0, N)).join(''); msg.it = V.items.filter(q => q.revealed && !q.taken).map(q => [q.k, q.type]); }
+  if (--V.syncN <= 0) { V.syncN = 60; msg.gr = Array.from(G.grid.subarray(0, N)).join(''); msg.it = V.items.filter(q => q.revealed && !q.taken).map(q => [q.k, q.type]); }
   netSend(msg);
 }
 function applyEvent(ev) {
   if (ev[0] === 'x') {
+    if (V.pend) V.pend = V.pend.filter(q => q.cx !== ev[1] || q.cy !== ev[2]);
     const arms = [ev[3], ev[4], ev[5], ev[6]];
     G.blasts.push({ cx: ev[1], cy: ev[2], arms, t: FLAME, rot: rnd(TAU) }); G.shake = Math.min(1, G.shake + .5); sfx.boom();
     for (let d = 0; d < 4; d++) for (let r = 0; r <= arms[d]; r++) confetti(ev[1] + DX[d] * r + .5, ev[2] + DY[d] * r + .5, pick([MUSTARD, RED, CREAM]), 2.5);
@@ -946,6 +947,11 @@ function applySnapshot(d) {
   G.enemies = G.enemies.filter(e => seen.has(e.id) || e.dead > 0);
   G.bombs = d.b.map(a => ({ cx: a[0], cy: a[1], t: a[2] < 0 ? Infinity : a[2], age: a[3], o: a[4] }));
   for (const ev of d.ev) applyEvent(ev);
+  if (V.pend && V.pend.length) V.pend = V.pend.filter(q => {
+    const age = (Date.now() - q.at) / 1000;
+    if (age > .9 || G.bombs.some(b => b.cx === q.cx && b.cy === q.cy)) return false;   // confirmed by the host, or refused
+    G.bombs.push({ cx: q.cx, cy: q.cy, t: G.det ? Infinity : Math.max(.02, FUSE - age), age, o: V.me, r: G.range }); return true;
+  });
   if (d.gr) {
     for (let k = 0; k < N; k++) if (G.burn[k] <= 0) G.grid[k] = d.gr.charCodeAt(k) - 48;
     V.items = d.it.map(a => ({ k: a[0], type: a[1], revealed: true, taken: false }));
@@ -966,12 +972,12 @@ function duelUpdate(dt) {
   const p = G.player, host = V.role === 'host';
   if (G.mode === 'between') { if (host) { V.nextT -= dt; if (V.nextT <= 0) duelStartHost(true); } return; }
   if (G.mode !== 'play') return;
-  // everyone talks about 15 times a second; ten silent seconds means that player is gone
+  // everyone talks about 30 times a second; ten silent seconds means that player is gone
   if (host) { for (const q of V.ps) if (q && q.slot && !q.gone && Date.now() - q.lastRx > 10000) dropGuest(q.slot); if (G.mode !== 'play') return; }
   else if (Date.now() - V.lastRx > 10000) { onDrop(); return; }
   if (host) worldStep(dt); else guestWorld(dt);
   if (!p.dead) moveLocal(dt); else p.dead = Math.max(.001, p.dead - dt);
-  const kk = Math.min(1, dt * 14);
+  const kk = Math.min(1, dt * 20);
   for (const q of V.ps) {
     if (!q || q.slot === V.me) continue;
     q.inv = Math.max(0, q.inv - dt); if (q.dead) q.dead = Math.max(.001, q.dead - dt);
@@ -997,7 +1003,7 @@ function duelUpdate(dt) {
     } else if (G.time <= 0) { duelFinish(-1); return; }
   }
   V.sendT -= dt;
-  if (V.sendT <= 0) { V.sendT = .066; if (host) sendSnapshot(); else netSend({ t: 'p', x: r3(p.x), y: r3(p.y), d: p.dir, m: p.moving ? 1 : 0 }); }
+  if (V.sendT <= 0) { V.sendT = .033; if (host) sendSnapshot(); else netSend({ t: 'p', x: r3(p.x), y: r3(p.y), d: p.dir, m: p.moving ? 1 : 0 }); }
 }
 /* w is the slot of the last one standing, or -1 for a draw */
 function duelFinish(w) {
@@ -1021,9 +1027,11 @@ function duelResult(w, fin) {
   $('bAgain').hidden = false; $('bAgain').textContent = t('newMatch');
   showOnly('oDuel');
 }
-function remoteBomb(pl) {
+function remoteBomb(pl, d) {
   if (!V.on || G.mode !== 'play' || !pl || pl.dead || pl.gone) return;
-  const cx = Math.floor(pl.nx), cy = Math.floor(pl.ny);
+  let cx = Math.floor(pl.nx), cy = Math.floor(pl.ny);
+  if (d && Number.isInteger(d.cx) && Number.isInteger(d.cy) && d.cx > 0 && d.cy > 0 && d.cx < COLS - 1 && d.cy < ROWS - 1 && Math.abs(d.cx + .5 - pl.nx) <= 1.6 && Math.abs(d.cy + .5 - pl.ny) <= 1.6) { cx = d.cx; cy = d.cy; }
+  V.sendT = 0;
   if (G.bombs.filter(b => b.o === pl.slot).length >= pl.bombsMax || G.grid[idx(cx, cy)] !== EMPTY || bombAt(cx, cy)) return;
   G.bombs.push({ cx, cy, t: pl.det ? Infinity : FUSE, age: 0, o: pl.slot, r: pl.range });
 }
@@ -1057,8 +1065,8 @@ function onData(d) {
     const q = V.ps[s]; if (q) q.lastRx = Date.now();
     if (d.t === 'bye') dropGuest(s);
     else if (d.t === 'p' && q && !q.dead && isFinite(d.x) && isFinite(d.y)) { q.nx = Math.max(1, Math.min(COLS - 1, +d.x)); q.ny = Math.max(1, Math.min(ROWS - 1, +d.y)); q.dir = d.d | 0; q.moving = !!d.m; }
-    else if (d.t === 'b') remoteBomb(q);
-    else if (d.t === 'd') { const b = q && q.det && G.mode === 'play' ? G.bombs.find(z => z.o === s) : null; if (b) explode(b); }
+    else if (d.t === 'b') remoteBomb(q, d);
+    else if (d.t === 'd') { const b = q && q.det && G.mode === 'play' ? G.bombs.find(z => z.o === s) : null; if (b) { explode(b); V.sendT = 0; } }
     else if (d.t === 'again' && V.on && G.mode === 'over') duelStartHost();
   } else {
     if (d.to !== V.myId && !(d.to === 'all' && (V.on || V.joined || d.t === 'start'))) return;
@@ -1205,7 +1213,15 @@ function placeBomb() {
   if (G.mode !== 'play' || G.paused) return;
   const p = G.player, cx = Math.floor(p.x), cy = Math.floor(p.y);
   if (p.dead) return;
-  if (V.on && V.role === 'guest') { netSend({ t: 'b' }); sfx.place(); buzz(12); return; }   // the host owns the world
+  if (V.on && V.role === 'guest') {
+    // The host owns the world, but waiting for its answer made every bomb feel late. So the bomb is drawn at once
+    // and the host is told which cell it is in; if the host refuses, the drawn bomb is dropped a moment later.
+    const pend = V.pend || (V.pend = []);
+    if (G.bombs.filter(b => b.o === V.me).length < G.bombsMax && G.grid[idx(cx, cy)] === EMPTY && !bombAt(cx, cy)) {
+      G.bombs.push({ cx, cy, t: G.det ? Infinity : FUSE, age: 0, o: V.me, r: G.range }); pend.push({ cx, cy, at: Date.now() });
+    }
+    netSend({ t: 'b', cx, cy }); sfx.place(); buzz(12); return;
+  }
   if (G.bombs.filter(b => !b.o).length >= G.bombsMax || G.grid[idx(cx, cy)] !== EMPTY || bombAt(cx, cy)) return;
   G.bombs.push({ cx, cy, t: G.det ? Infinity : FUSE, age: 0, o: 0, r: G.range });
   sfx.place(); buzz(12);
