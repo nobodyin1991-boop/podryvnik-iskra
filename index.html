@@ -159,19 +159,38 @@ body.touch.menu-open .controls{display:none}
   .menu{padding:0 14px}
   .menu h1{font-size:clamp(26px,9.6vw,48px)}
 }
-/* phone held sideways: the action buttons float over the playfield, the field itself is the stick */
+/* phone held sideways: the counters and the thumb controls move into two side columns, so the playfield gets the full height and nothing covers it. Left thumb: bomb and blast. Right thumb: the stick. */
 @media (orientation:landscape) and (max-height:520px){
   body{gap:4px; padding-block:4px}
   .brand,.stat .sub{display:none}
-  body.touch .controls{position:fixed; z-index:5; height:auto; pointer-events:none; justify-content:center;
-    left:max(16px,env(safe-area-inset-left,0px)); right:max(16px,env(safe-area-inset-right,0px));
-    bottom:calc(12px + env(safe-area-inset-bottom,0px))}
-  body.touch .controls .act{pointer-events:none; justify-content:center; padding-left:150px; opacity:.85}
-  body.touch .controls .stickwrap{opacity:.85}
-  body.touch .controls .abtn, body.touch .controls .stickwrap{pointer-events:auto}
+  body.touch:not(.menu-open){display:grid; grid-template-columns:104px minmax(0,1fr) 112px; grid-template-rows:repeat(4,auto) minmax(0,1fr); gap:4px 8px}
+  body.touch:not(.menu-open) .hud, body.touch:not(.menu-open) .controls{display:contents}
+  body.touch:not(.menu-open) .stage{grid-column:2; grid-row:1/-1}
+  body.touch:not(.menu-open) .stat{grid-column:1; align-self:start; justify-content:space-between; padding:1px 7px}
+  body.touch:not(.menu-open) .stat:nth-child(n+6){grid-column:3}
+  body.touch:not(.menu-open) .stat:nth-child(2), body.touch:not(.menu-open) .stat:nth-child(6){grid-row:1}
+  body.touch:not(.menu-open) .stat:nth-child(3), body.touch:not(.menu-open) .stat:nth-child(7){grid-row:2}
+  body.touch:not(.menu-open) .stat:nth-child(4), body.touch:not(.menu-open) .stat:nth-child(8){grid-row:3}
+  body.touch:not(.menu-open) .stat:nth-child(5){grid-row:4}
+  body.touch:not(.menu-open) .hud-btns{grid-column:3; grid-row:4; margin:0 2px 0 0; flex-direction:column; gap:5px}
+  body.touch:not(.menu-open) .hud-btns button{padding:3px 6px; font-size:11px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+  body.touch:not(.menu-open) .act{grid-column:1; grid-row:5; flex-direction:column; justify-content:flex-end; align-items:center; gap:8px; padding-bottom:calc(6px + env(safe-area-inset-bottom,0px))}
+  body.touch:not(.menu-open) .stickwrap{grid-column:3; grid-row:5; width:auto; align-self:end; padding-bottom:calc(6px + env(safe-area-inset-bottom,0px))}
   .stick{width:104px; height:104px}
-  body.touch.menu-open .controls{display:none}
-  .abtn.bomb{width:80px; height:80px} .abtn.det{width:60px; height:60px}
+  .abtn.bomb{width:82px; height:82px} .abtn.det{width:58px; height:58px}
+  /* menu on a short screen: no counters, a small print, so Play is on the first screen */
+  body.menu-open .stat{display:none}
+  .poster{grid-template-columns:minmax(0,170px) minmax(0,1fr); padding:10px 12px 22px; gap:12px 20px; align-items:start}
+  .hero{max-width:170px}
+  .stamp{width:62px; height:62px; right:-10px; top:-10px; font-size:8px} .stamp b{font-size:20px}
+  .titleblock{gap:8px}
+  .menu h1{font-size:clamp(22px,4.2vw,34px)}
+  .lead{font-size:13px; line-height:1.38; max-width:none}
+  .btn.primary{padding:9px 22px; font-size:15px}
+}
+/* tablet held sideways: one thumb each. Bomb and blast in the left corner, the stick in the right corner. */
+@media (orientation:landscape) and (min-height:521px){
+  body.touch .controls .act{flex-direction:row-reverse; justify-content:flex-end}
 }
 @media (prefers-reduced-motion:reduce){ .banner,.btn{transition:none} }
 </style>
@@ -1817,8 +1836,24 @@ function drawPlayer(c, x, y, s, p, t) {
   rr(c, -s * .22 + (hor ? st : 0), s * .24 + (hor ? 0 : st * .5), s * .17, s * .12, s * .04); fs(c, INK, s, .02);
   rr(c, s * .05 - (hor ? st : 0), s * .24 - (hor ? 0 : st * .5), s * .17, s * .12, s * .04); fs(c, INK, s, .02);
   const ink2 = SLOT_INK[p.slot || 0];   // every duellist is printed in their own ink
-  rr(c, -s * .27, -s * .22 - bob, s * .54, s * .5, s * .16); c.fillStyle = SLOT_BODY[p.slot || 0]; c.fill();
-  c.save(); c.clip(); c.fillStyle = ink2; c.fillRect(-s * .3, s * .1 - bob, s * .6, s * .08); c.restore();
+  const body = SLOT_BODY[p.slot || 0];
+  for (const sg of [-1, 1]) {   // ears
+    circ(c, sg * s * .175, -s * .225 - bob, s * .1); c.fillStyle = body; c.fill(); c.strokeStyle = INK; c.lineWidth = s * .05; c.stroke();
+    dot(c, sg * s * .175, -s * .24 - bob, s * .045, ink2);
+  }
+  rr(c, -s * .27, -s * .22 - bob, s * .54, s * .5, s * .16); c.fillStyle = body; c.fill();
+  c.save(); c.clip();   // checked shirt, printed in the player's ink
+  const sy = s * .075 - bob;
+  c.fillStyle = ink2; c.fillRect(-s * .3, sy, s * .6, s * .3);
+  c.fillStyle = 'rgba(29,27,46,.3)';
+  for (const vx of [-.215, -.085, .045, .175]) c.fillRect(vx * s, sy, s * .05, s * .3);
+  for (const hy of [.035, .125]) c.fillRect(-s * .3, sy + hy * s, s * .6, s * .042);
+  c.fillStyle = 'rgba(255,250,240,.42)';
+  for (const vx of [-.14, -.01, .12]) c.fillRect(vx * s, sy, s * .016, s * .3);
+  c.fillRect(-s * .3, sy + s * .092, s * .6, s * .016);
+  c.beginPath(); c.moveTo(-s * .085, sy); c.lineTo(0, sy + s * .075); c.lineTo(s * .085, sy); c.closePath(); c.fillStyle = body; c.fill(); c.strokeStyle = INK; c.lineWidth = s * .028; c.stroke();
+  c.beginPath(); c.moveTo(-s * .3, sy); c.lineTo(s * .3, sy); c.stroke();
+  c.restore();
   rr(c, -s * .27, -s * .22 - bob, s * .54, s * .5, s * .16); c.strokeStyle = INK; c.lineWidth = s * .055; c.stroke();
   if (p.dir !== 0) {
     const vx = DX[p.dir] * s * .05;
@@ -1829,8 +1864,6 @@ function drawPlayer(c, x, y, s, p, t) {
   } else {
     c.strokeStyle = INK; c.lineWidth = s * .035; c.beginPath(); c.moveTo(-s * .11, -s * .08 - bob); c.lineTo(s * .11, -s * .08 - bob); c.moveTo(-s * .11, 0 - bob); c.lineTo(s * .11, 0 - bob); c.stroke();
   }
-  c.strokeStyle = INK; c.lineWidth = s * .045; c.beginPath(); c.moveTo(0, -s * .22 - bob); c.lineTo(0, -s * .36 - bob); c.stroke();
-  circ(c, 0, -s * .39 - bob, s * .06); fs(c, ink2, s, .04);
   c.restore();
 }
 function drawBomb(c, x, y, s, b, t) {
