@@ -955,7 +955,7 @@ function duelStartHost(keepScore) {
 function duelStartGuest(d) {
   const slot = Array.isArray(d.ids) ? d.ids.indexOf(V.myId) : -1;
   if (slot < (d.sv ? 0 : 1) || !d.grid || !(d.cols * d.rows <= MAXN)) return;     // this match was started without us
-  clearInterval(V.helloT);
+  clearInterval(V.helloT); netStatus(String());
   COLS = d.cols; ROWS = d.rows; N = COLS * ROWS;
   G.grid.fill(EMPTY); clearField(); V.items = [];
   for (let k = 0; k < N; k++) G.grid[k] = d.grid[k];
@@ -1191,8 +1191,12 @@ function linkLost() {
     showOnly('oDuel');
   } else if (!V.on) netFail();
 }
+function forgetLink() {
+  try { if (/^#duel-/.test(location.hash || '') && window.history && history.replaceState) history.replaceState(null, '', location.href.split('#')[0]); } catch (e) { /* the address bar is not ours to change here */ }
+  if ($('joinCode').value === V.code) $('joinCode').value = '';
+}
 function leaveDuel() {
-  clearTimeout(V.timer); clearInterval(V.helloT); netSend({ t: 'bye' });
+  clearTimeout(V.timer); clearInterval(V.helloT); netSend({ t: 'bye' }); forgetLink();
   const c = V.link; V.conn = null; V.link = null; V.on = false; V.role = null; V.ps = []; V.ids = [null, null, null, null]; V.me = 0; V.joined = false; V.owner = false; V.items = []; V.startMsg = null;
   try { if (c) c.close(); } catch (e) { /* already closed */ }
   COLS = COLS_BASE; ROWS = ROWS_BASE; N = COLS * ROWS; G.grid.fill(EMPTY); clearField(); G.bombsMax = 1; G.range = 1; G.det = false; G.score = 0;
@@ -2253,10 +2257,18 @@ if (window.ResizeObserver) new ResizeObserver(resize).observe(stage); else windo
 requestAnimationFrame(frame);
 window.__iskra = G;
 window.addEventListener('pagehide', () => { if (V.conn) netSend({ t: 'bye' }); });
-(function duelBoot() {
+function openDuelLink() {
   const m = /^#duel-([A-Za-z]{5})$/.exec(location.hash || '');
-  if (m) { $('joinCode').value = m[1].toUpperCase(); joinDuel(m[1]); try { $('duelBlock').scrollIntoView(); } catch (e) { /* not essential */ } }
-})();
+  if (!m) return;
+  const code = m[1].toUpperCase();
+  if (V.link && V.code === code) return;                 // already in this very room
+  if (G.mode !== 'menu') toMenu(); else if (V.on || V.link) leaveDuel();   // whatever was going on ends: the player asked for this room
+  try { if (location.hash !== '#duel-' + code) history.replaceState(null, '', location.href.split('#')[0] + '#duel-' + code); } catch (e) { /* cosmetic */ }
+  $('joinCode').value = code; joinDuel(code);
+  try { $('duelBlock').scrollIntoView(); } catch (e) { /* not essential */ }
+}
+window.addEventListener('hashchange', openDuelLink);
+openDuelLink();
 })();
 </script>
 
