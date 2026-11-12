@@ -71,6 +71,8 @@ button:focus-visible{outline:3px solid var(--teal); outline-offset:2px}
 .btn{background:#fffaf0; border:3px solid var(--ink); border-radius:4px; padding:11px 18px; font-family:var(--display); font-size:14px; box-shadow:4px 4px 0 var(--ink); transition:transform .06s}
 .btn:hover{transform:translate(-1px,-1px)}
 .btn:active{transform:translate(4px,4px); box-shadow:none}
+.btn:disabled{opacity:.45; cursor:default; transform:none}
+.count{margin:0; font-family:var(--display); font-size:15px}
 .btn.primary{background:var(--red); color:#fffaf0; font-size:17px; padding:13px 24px}
 
 /* menu poster */
@@ -209,6 +211,10 @@ body.touch.menu-open .controls{display:none}
         <h3 data-i18n="duelH">Duel for two</h3>
         <p class="lead" data-i18n="duelLead">A match to three wins. You start in opposite corners; bombs, range and one detonator per half of the map lie under the crates. Slimes, beetles and spinners roam the map. Whoever blows up the opponent takes the round, and every round is on a new map.</p>
         <div class="row">
+          <span class="seg" role="group" data-i18n-attr="aria-label:playersAria" aria-label="Number of players">
+            <button class="segb" id="plTwo" type="button" aria-pressed="true" data-i18n="players2">2 players</button>
+            <button class="segb" id="plFour" type="button" aria-pressed="false" data-i18n="players4">Up to 4 players</button>
+          </span>
           <span class="seg" role="group" data-i18n-attr="aria-label:mapAria" aria-label="Map size">
             <button class="segb" id="mapStd" type="button" aria-pressed="true" data-i18n="mapStd">Standard map</button>
             <button class="segb" id="mapWide" type="button" aria-pressed="false" data-i18n="mapWide">Wide, 1.5×</button>
@@ -275,15 +281,16 @@ body.touch.menu-open .controls{display:none}
 
   <section class="overlay" id="oWait" hidden>
     <div class="sheet">
-      <h2 data-i18n="waitT">Waiting for player two</h2>
-      <p data-i18n="waitP">You are already on the map and the game is paused. Send the link to the other player: the pause lifts as soon as they open it.</p>
+      <h2 id="waitTitle">Waiting for player two</h2>
+      <p id="waitText">You are already on the map and the game is paused.</p>
       <div class="invite" id="duelInvite">
         <input id="duelUrl" type="text" readonly data-i18n-attr="aria-label:urlAria" aria-label="Invite link">
         <button class="btn primary" id="bCopy" type="button">Copy link</button>
       </div>
       <p><span data-i18n="waitCodeP">Or let them type this code in the game menu:</span> <b class="code" id="waitCode"></b></p>
+      <p class="count" id="waitCount" hidden></p>
       <p class="status" id="waitStatus" hidden></p>
-      <div class="row"><button class="btn" id="bCancelWait" type="button" data-i18n="cancelWait">Cancel and go to menu</button></div>
+      <div class="row"><button class="btn primary" id="bStart" type="button" data-i18n="startNow" hidden>Start now</button><button class="btn" id="bCancelWait" type="button" data-i18n="cancelWait">Cancel and go to menu</button></div>
     </div>
   </section>
 
@@ -403,6 +410,10 @@ en: {
   overText: "You ran out of lives in bay {0} of {1}. Score {2}, best {3}. The route, bombs, range and detonator are reset: everything starts from bay one.",
   winText: "All {0} bays are cleared. Score {1}, best {2}.", wideTag: " · wide map",
   routeHint: "You are in bay {0} of {1}, lives: {2}. When the lives run out, the route and all upgrades reset and you start again from bay one.", best: " Best: {0}.",
+  c0: "red", c1: "teal", c2: "purple", c3: "blue", youAre: "You are the {0} Iskra. First to {1} wins", roundTo: "The round goes to the {0} Iskra", drawNone: "Draw: no one is left standing",
+  finalWonN: "Final score {0}. You took three rounds.", playersAria: "Number of players", players2: "2 players", players4: "Up to 4 players", startNow: "Start now",
+  playersIn: "Players in the room: {0} of {1}", joinedWait: "You are in ({0} of {1}). Waiting for the host to start…", roomFull: "The room is full or the match has already started.",
+  waitT4: "Waiting for players", waitP4: "You are already on the map and the game is paused. Send the link to the others and press Start when everyone is in.",
   hudDuel: "duel", youRed: "you are red", youTeal: "you are teal", cardTime: "No. {0} · when time runs out", cardFrom: "No. {0} · from bay {1}", speed: "speed", thruCrates: "through crates",
 },
 ru: {
@@ -444,6 +455,10 @@ ru: {
   overText: "Жизни кончились в отсеке {0} из {1}. Счёт {2}, рекорд {3}. Маршрут, бомбы, дальность и детонатор сброшены: всё начинается с первого отсека.",
   winText: "Все {0} отсеков пройдены. Счёт {1}, рекорд {2}.", wideTag: " · широкая карта",
   routeHint: "Ты в отсеке {0} из {1}, жизней: {2}. Когда жизни кончатся, маршрут и все улучшения сбросятся, и идти придётся с первого отсека.", best: " Рекорд: {0}.",
+  c0: "красная", c1: "бирюзовая", c2: "фиолетовая", c3: "синяя", youAre: "Ты {0} Искра. Игра до {1} побед", roundTo: "Раунд берёт {0} Искра", drawNone: "Ничья: никого не осталось",
+  finalWonN: "Итоговый счёт {0}. Три раунда за тобой.", playersAria: "Число игроков", players2: "2 игрока", players4: "До 4 игроков", startNow: "Начать",
+  playersIn: "Игроков в комнате: {0} из {1}", joinedWait: "Ты в комнате ({0} из {1}). Ждём, когда хост начнёт…", roomFull: "Комната заполнена или матч уже идёт.",
+  waitT4: "Ждём игроков", waitP4: "Ты уже на карте, игра на паузе. Отправь ссылку остальным и нажми «Начать», когда все зайдут.",
   hudDuel: "дуэль", youRed: "ты красная", youTeal: "ты бирюзовая", cardTime: "№{0} · когда выйдет время", cardFrom: "№{0} · с отсека {1}", speed: "ход", thruCrates: "сквозь ящики",
 },
 es: {
@@ -485,6 +500,10 @@ es: {
   overText: "Te quedaste sin vidas en el sector {0} de {1}. Puntos {2}, récord {3}. La ruta, las bombas, el alcance y el detonador se reinician: todo empieza desde el sector uno.",
   winText: "Los {0} sectores están despejados. Puntos {1}, récord {2}.", wideTag: " · mapa ancho",
   routeHint: "Estás en el sector {0} de {1}, vidas: {2}. Cuando se acaben las vidas, la ruta y todas las mejoras se reinician y vuelves al sector uno.", best: " Récord: {0}.",
+  c0: "roja", c1: "turquesa", c2: "morada", c3: "azul", youAre: "Eres la Iskra {0}. Gana quien llegue a {1}", roundTo: "La ronda es para la Iskra {0}", drawNone: "Empate: no queda nadie en pie",
+  finalWonN: "Marcador final {0}. Te llevaste tres rondas.", playersAria: "Número de jugadores", players2: "2 jugadores", players4: "Hasta 4 jugadores", startNow: "Empezar",
+  playersIn: "Jugadores en la sala: {0} de {1}", joinedWait: "Ya estás dentro ({0} de {1}). Esperando a que el anfitrión empiece…", roomFull: "La sala está llena o la partida ya empezó.",
+  waitT4: "Esperando jugadores", waitP4: "Ya estás en el mapa y el juego está en pausa. Envía el enlace a los demás y pulsa Empezar cuando estén todos.",
   hudDuel: "duelo", youRed: "eres la roja", youTeal: "eres la turquesa", cardTime: "N.º {0} · cuando se acaba el tiempo", cardFrom: "N.º {0} · desde el sector {1}", speed: "paso", thruCrates: "atraviesa cajas",
 },
 zh: {
@@ -526,6 +545,10 @@ zh: {
   overText: "你在第 {0} 个舱室（共 {1} 个）用完了生命。得分 {2}，最高 {3}。路线、炸弹、范围和引爆器已重置：一切从第一个舱室开始。",
   winText: "{0} 个舱室全部清空。得分 {1}，最高 {2}。", wideTag: " · 宽地图",
   routeHint: "你在第 {0} 个舱室（共 {1} 个），生命：{2}。生命用完后，路线和所有强化都会重置，需要从第一个舱室重新开始。", best: " 最高分：{0}。",
+  c0: "红色", c1: "青色", c2: "紫色", c3: "蓝色", youAre: "你是{0} Iskra。先赢 {1} 回合者获胜", roundTo: "{0} Iskra 赢得这一回合", drawNone: "平局：无人幸存",
+  finalWonN: "最终比分 {0}。你拿下了三个回合。", playersAria: "玩家人数", players2: "2 人", players4: "最多 4 人", startNow: "开始比赛",
+  playersIn: "房间内玩家：{0}/{1}", joinedWait: "你已加入（{0}/{1}）。等待房主开始…", roomFull: "房间已满或比赛已开始。",
+  waitT4: "等待玩家加入", waitP4: "你已经在地图上，游戏处于暂停状态。把链接发给其他人，等大家都加入后点击“开始比赛”。",
   hudDuel: "对决", youRed: "你是红色", youTeal: "你是青色", cardTime: "{0} 号 · 时间耗尽时出现", cardFrom: "{0} 号 · 从舱室 {1} 起", speed: "速度", thruCrates: "可穿过箱子",
 },
 de: {
@@ -567,6 +590,10 @@ de: {
   overText: "In Sektor {0} von {1} sind dir die Leben ausgegangen. Punkte {2}, Rekord {3}. Route, Bomben, Reichweite und Zünder sind zurückgesetzt: Alles beginnt bei Sektor eins.",
   winText: "Alle {0} Sektoren sind geräumt. Punkte {1}, Rekord {2}.", wideTag: " · breite Karte",
   routeHint: "Du bist in Sektor {0} von {1}, Leben: {2}. Sind die Leben aufgebraucht, werden Route und alle Upgrades zurückgesetzt und du beginnst wieder bei Sektor eins.", best: " Rekord: {0}.",
+  c0: "rote", c1: "türkise", c2: "violette", c3: "blaue", youAre: "Du bist die {0} Iskra. Wer zuerst {1} Siege hat, gewinnt", roundTo: "Die Runde geht an die {0} Iskra", drawNone: "Unentschieden: Niemand steht mehr",
+  finalWonN: "Endstand {0}. Du hast drei Runden geholt.", playersAria: "Anzahl der Spieler", players2: "2 Spieler", players4: "Bis zu 4 Spieler", startNow: "Jetzt starten",
+  playersIn: "Spieler im Raum: {0} von {1}", joinedWait: "Du bist drin ({0} von {1}). Warten, bis der Gastgeber startet…", roomFull: "Der Raum ist voll oder das Match läuft schon.",
+  waitT4: "Warten auf Spieler", waitP4: "Du bist schon auf der Karte, das Spiel ist pausiert. Schick den Link an die anderen und drück auf Starten, wenn alle da sind.",
   hudDuel: "Duell", youRed: "du bist rot", youTeal: "du bist türkis", cardTime: "Nr. {0} · wenn die Zeit abläuft", cardFrom: "Nr. {0} · ab Sektor {1}", speed: "Tempo", thruCrates: "durch Kisten",
 },
 pt: {
@@ -608,6 +635,10 @@ pt: {
   overText: "Suas vidas acabaram no setor {0} de {1}. Pontos {2}, recorde {3}. A rota, as bombas, o alcance e o detonador foram reiniciados: tudo começa do setor um.",
   winText: "Todos os {0} setores estão livres. Pontos {1}, recorde {2}.", wideTag: " · mapa largo",
   routeHint: "Você está no setor {0} de {1}, vidas: {2}. Quando as vidas acabarem, a rota e todas as melhorias são reiniciadas e você volta ao setor um.", best: " Recorde: {0}.",
+  c0: "vermelha", c1: "turquesa", c2: "roxa", c3: "azul", youAre: "Você é a Iskra {0}. Vence quem fizer {1} primeiro", roundTo: "A rodada é da Iskra {0}", drawNone: "Empate: ninguém ficou de pé",
+  finalWonN: "Placar final {0}. Você levou três rodadas.", playersAria: "Número de jogadores", players2: "2 jogadores", players4: "Até 4 jogadores", startNow: "Começar",
+  playersIn: "Jogadores na sala: {0} de {1}", joinedWait: "Você entrou ({0} de {1}). Esperando o anfitrião começar…", roomFull: "A sala está cheia ou a partida já começou.",
+  waitT4: "Esperando jogadores", waitP4: "Você já está no mapa e o jogo está pausado. Envie o link aos outros e toque em Começar quando todos entrarem.",
   hudDuel: "duelo", youRed: "você é a vermelha", youTeal: "você é a turquesa", cardTime: "N.º {0} · quando o tempo acaba", cardFrom: "N.º {0} · a partir do setor {1}", speed: "passo", thruCrates: "atravessa caixas",
 },
 };
@@ -728,14 +759,20 @@ function genLevel(L) {
    locally (so steering stays instant) and reports the position; the host decides who picked what up and who got hit. */
 const DUEL_WINS = 3, PAGES_URL = 'https://2-28-227-3.sslip.io/iskra/';
 const SANDBOX = /claude|anthropic/i.test(location.hostname);   // the Claude preview page blocks network sockets
-const V = { score: [0, 0], round: 1, wide: !!save.duelWide, nextT: 0, startAt: 0, on: false, role: null, peer: null, conn: null, items: [], rp: null, ev: [], sendT: 0, ending: false, endT: 0, eid: 1, code: '', timer: 0 };
+/* A match holds two to four players. Slot 0 is the host; every slot has its own corner and its own ink. */
+const SLOT_INK = [RED, TEAL, '#7a4fb0', '#2f6fd0'], SLOT_BODY = [CREAM, '#e4f4ef', '#efe6f7', '#e3edfa'];
+const V = { score: [0, 0, 0, 0], round: 1, wide: !!save.duelWide, size: save.duelSize === 4 ? 4 : 2, me: 0, ps: [], ids: [null, null, null, null], joined: false,
+  nextT: 0, startAt: 0, on: false, role: null, link: null, conn: null, items: [], ev: [], sendT: 0, ending: false, endT: 0, eid: 1, code: '', timer: 0 };
 const r3 = v => Math.round(v * 1000) / 1000;
-function newPlayer(x, y, alt) { return { x, y, nx: x, ny: y, dir: 2, travel: 2, moving: false, anim: 0, inv: 2.5, dead: 0, alt, bombsMax: 1, range: 1, det: false }; }
-function logicalPos(pl) { return pl === V.rp ? [pl.nx, pl.ny] : [pl.x, pl.y]; }
+const corner = s => [[1.5, 1.5], [COLS - 1.5, ROWS - 1.5], [COLS - 1.5, 1.5], [1.5, ROWS - 1.5]][s];
+function newPlayer(slot) { const [x, y] = corner(slot); return { slot, x, y, nx: x, ny: y, dir: 2, travel: 2, moving: false, anim: 0, inv: 2.5, dead: 0, gone: false, lastRx: Date.now(), bombsMax: 1, range: 1, det: false }; }
+const logicalPos = pl => pl.slot === V.me ? [pl.x, pl.y] : [pl.nx, pl.ny];   // others are known by their last reported position
+const livePlayers = () => V.ps.filter(q => q && !q.gone);
+const guestCount = () => V.ids.filter(Boolean).length;
 function nearestPlayer(cx, cy) {
   let best = null, bd = 1e9;
-  for (const pl of [G.player, V.rp]) {
-    if (!pl || pl.dead) continue;
+  for (const pl of livePlayers()) {
+    if (pl.dead) continue;
     const [x, y] = logicalPos(pl), d = Math.abs(x - cx - .5) + Math.abs(y - cy - .5);
     if (d < bd) { bd = d; best = { x, y, dead: 0 }; }
   }
@@ -743,31 +780,33 @@ function nearestPlayer(cx, cy) {
 }
 function netSend(o) {
   if (!V.conn) return;
-  if (V.role === 'host') o.to = V.gid; else o.i = V.myId;   // a room code could be guessed: every message names its pair
+  if (V.role === 'host') { if (!o.to) o.to = 'all'; } else o.i = V.myId;   // a room code could be guessed: every message names who it is for or from
   try { V.conn.send(o); } catch (e) { /* link is gone; the down handler reports it */ }
 }
 function clearField() { G.bombs = []; G.blasts = []; G.enemies = []; G.parts = []; G.pops = []; G.spawns = []; G.burn.fill(0); G.flame.fill(0); G.door = { k: -1, revealed: false, wasOpen: false }; G.item = { k: -1, type: 'bomb', revealed: false, taken: true }; V.ev = []; V.ending = false; V.endT = 0; V.sendT = 0; }
 function genDuel() {
   COLS = V.wide ? COLS_WIDE : COLS_BASE; ROWS = ROWS_BASE; N = COLS * ROWS;
   const g = G.grid; g.fill(EMPTY); clearField();
-  const per = V.wide ? 5 : 4, loot = [...Array(per).fill('range'), ...Array(per).fill('bomb'), 'det'];
+  const four = V.size === 4, corners = four ? [0, 1, 2, 3] : [0, 1];
+  const per = four ? (V.wide ? 3 : 2) : (V.wide ? 5 : 4), loot = [...Array(per).fill('range'), ...Array(per).fill('bomb'), 'det'];
   for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++)
     if (x === 0 || y === 0 || x === COLS - 1 || y === ROWS - 1 || (x % 2 === 0 && y % 2 === 0)) g[idx(x, y)] = HARD;
-  const d0 = k => (k % COLS - 1) + (Math.floor(k / COLS) - 1), d1 = k => (COLS - 2 - k % COLS) + (ROWS - 2 - Math.floor(k / COLS));
-  const halves = [[], []];
+  // which starting corner a cell belongs to, and how far it is from it
+  const near = k => { let b = 0, bd = 1e9; for (const s of corners) { const [cx, cy] = corner(s), d = Math.abs(k % COLS + .5 - cx) + Math.abs(Math.floor(k / COLS) + .5 - cy); if (d < bd) { bd = d; b = s; } } return [corners.indexOf(b), bd]; };
+  const parts = corners.map(() => []);
   for (let y = 1; y < ROWS - 1; y++) for (let x = 1; x < COLS - 1; x++) {
-    const k = idx(x, y);
-    if (g[k] !== EMPTY || d0(k) <= 1 || d1(k) <= 1) continue;
-    if (rnd() < .42) { g[k] = SOFT; halves[d0(k) <= d1(k) ? 0 : 1].push(k); }
+    const k = idx(x, y), [part, d] = near(k);
+    if (g[k] !== EMPTY || d <= 1) continue;
+    if (rnd() < .42) { g[k] = SOFT; parts[part].push(k); }
   }
-  // the same loot on each half of the map, so neither corner is the lucky one
+  // the same loot around every corner, so nobody starts in the lucky one
   V.items = [];
-  for (const list of halves) {
+  for (const list of parts) {
     list.sort(() => rnd() - .5);
     loot.forEach((type, i) => { if (list[i] !== undefined) V.items.push({ k: list[i], type, revealed: false, taken: false }); });
   }
   const empties = [];
-  for (let y = 1; y < ROWS - 1; y++) for (let x = 1; x < COLS - 1; x++) { const k = idx(x, y); if (g[k] === EMPTY && d0(k) >= 6 && d1(k) >= 6) empties.push(k); }
+  for (let y = 1; y < ROWS - 1; y++) for (let x = 1; x < COLS - 1; x++) { const k = idx(x, y); if (g[k] === EMPTY && near(k)[1] >= 6) empties.push(k); }
   for (const type of (V.wide ? [1, 1, 1, 2, 2, 3, 3] : [1, 1, 2, 2, 3])) {
     if (!empties.length) break;
     const k = empties.splice(ri(empties.length), 1)[0];
@@ -776,38 +815,51 @@ function genDuel() {
   for (const e of G.enemies) e.id = V.eid++;
   G.level = pick([1, 6, 11, 16, 21, 26]); G.time = V.wide ? 300 : 240; G.timeUp = true; G.shake = 0;
 }
-function duelBegin(sub) {
+const scoreText = () => {   // two players: mine first; more: in slot order (red : teal : purple : blue)
+  const act = [0, 1, 2, 3].filter(s => V.ps[s]);
+  if (act.length <= 2) { const other = act.find(s => s !== V.me); return V.score[V.me] + ':' + V.score[other === undefined ? 1 : other]; }
+  return act.map(s => V.score[s]).join(':');
+};
+function duelBegin() {
   V.on = true; V.lastRx = Date.now(); G.mode = 'play'; G.paused = false; G.score = 0; G.bombsMax = 1; G.range = 1; G.det = false;
-  clearTimeout(V.timer); showOnly(null); ensureTiles(); snapCam(); showBanner(t('round', V.round), sub, 2.6);
+  clearTimeout(V.timer); showOnly(null); ensureTiles(); snapCam();
+  showBanner(t('round', V.round), V.round === 1 ? t('youAre', t('c' + V.me), DUEL_WINS) : t('scoreIs', scoreText()), 2.6);
 }
-/* the host steps onto the map at once; everything stands still until the second player arrives */
+function updateWaitSheet() {
+  const four = V.size === 4, n = 1 + guestCount();
+  $('waitTitle').textContent = t(four ? 'waitT4' : 'waitT'); $('waitText').textContent = t(four ? 'waitP4' : 'waitP');
+  $('waitCount').textContent = four ? t('playersIn', n, 4) : ''; $('waitCount').hidden = !four;
+  $('bStart').hidden = !four; $('bStart').disabled = n < 2;
+}
+/* the host steps onto the map at once; everything stands still until the others arrive */
 function hostWait() {
-  genDuel(); V.on = true; V.rp = null;
-  G.player = newPlayer(1.5, 1.5, false); G.score = 0; G.bombsMax = 1; G.range = 1; G.det = false;
+  genDuel(); V.on = true; V.me = 0; V.ids = [null, null, null, null]; V.conn = V.link;
+  V.ps = [newPlayer(0)]; G.player = V.ps[0]; G.score = 0; G.bombsMax = 1; G.range = 1; G.det = false;
   G.mode = 'wait'; G.paused = false; ensureTiles(); snapCam(); hideBanner();
-  $('waitCode').textContent = V.code; $('bCopy').textContent = t('copy'); $('duelInvite').hidden = false;
+  $('waitCode').textContent = V.code; $('bCopy').textContent = t('copy'); $('duelInvite').hidden = false; updateWaitSheet();
   showOnly('oWait');
 }
-const scoreText = () => { const m = V.role === 'host' ? 0 : 1; return V.score[m] + ':' + V.score[1 - m]; };   // mine first
 function duelStartHost(keepScore) {
+  if (!guestCount()) return;
   if (G.mode !== 'wait') genDuel();          // every round gets a fresh map; the very first one uses the map the host waited on
-  if (keepScore === true) V.round++; else { V.score = [0, 0]; V.round = 1; }
-  G.player = newPlayer(1.5, 1.5, false); V.rp = newPlayer(COLS - 1.5, ROWS - 1.5, true);
+  if (keepScore === true) V.round++; else { V.score = [0, 0, 0, 0]; V.round = 1; }
+  V.me = 0; V.ps = [0, 1, 2, 3].map(s => (s === 0 || V.ids[s]) ? newPlayer(s) : null); G.player = V.ps[0];
   V.syncN = 30; V.startAt = Date.now();
-  V.startMsg = { t: 'start', cols: COLS, rows: ROWS, level: G.level, time: G.time, sc: V.score, rd: V.round, grid: Array.from(G.grid.subarray(0, N)) };
+  V.startMsg = { t: 'start', to: 'all', ids: V.ids, cols: COLS, rows: ROWS, level: G.level, time: G.time, sc: V.score, rd: V.round, grid: Array.from(G.grid.subarray(0, N)) };
   netSend(V.startMsg);
-  duelBegin(V.round === 1 ? t('youRedStart', DUEL_WINS) : t('scoreIs', scoreText()));
+  duelBegin();
 }
 function duelStartGuest(d) {
+  const slot = Array.isArray(d.ids) ? d.ids.indexOf(V.myId) : -1;
+  if (slot < 1 || !d.grid || !(d.cols * d.rows <= MAXN)) return;     // this match was started without us
   clearInterval(V.helloT);
-  if (!d.grid || !(d.cols * d.rows <= MAXN)) return;
   COLS = d.cols; ROWS = d.rows; N = COLS * ROWS;
   G.grid.fill(EMPTY); clearField(); V.items = [];
   for (let k = 0; k < N; k++) G.grid[k] = d.grid[k];
   G.level = d.level; G.time = d.time; G.timeUp = true; G.shake = 0;
-  V.score = Array.isArray(d.sc) ? [d.sc[0] | 0, d.sc[1] | 0] : [0, 0]; V.round = d.rd | 0 || 1;
-  G.player = newPlayer(COLS - 1.5, ROWS - 1.5, true); V.rp = newPlayer(1.5, 1.5, false);
-  duelBegin(V.round === 1 ? t('youTealStart', DUEL_WINS) : t('scoreIs', scoreText()));
+  V.score = [0, 1, 2, 3].map(s => (Array.isArray(d.sc) ? d.sc[s] | 0 : 0)); V.round = d.rd | 0 || 1;
+  V.me = slot; V.ids = d.ids.slice(0, 4); V.ps = [0, 1, 2, 3].map(s => (s === 0 || V.ids[s]) ? newPlayer(s) : null); G.player = V.ps[slot];
+  duelBegin();
 }
 function deathFx(x, y, mine) { for (let i = 0; i < 24; i++) confetti(x, y, pick([TEAL, CREAM, MUSTARD, RED]), 4); sfx.die(); if (mine) { buzz(120); stickEnd(); } }
 function itemFx(pl, type, mine) {
@@ -817,7 +869,7 @@ function itemFx(pl, type, mine) {
 }
 function duelReveal(k) { for (const it of V.items) if (it.k === k && !it.revealed) { it.revealed = true; V.ev.push(['r', k, it.type]); } }
 function duelTake(pl, it) {
-  it.taken = true; const remote = pl === V.rp, who = remote ? 1 : 0;
+  it.taken = true; const remote = pl.slot !== V.me, who = pl.slot;
   if (it.type === 'bomb') { if (remote) pl.bombsMax = Math.min(CAP, pl.bombsMax + 1); else G.bombsMax = Math.min(CAP, G.bombsMax + 1); }
   else if (it.type === 'range') { if (remote) pl.range = Math.min(CAP, pl.range + 1); else G.range = Math.min(CAP, G.range + 1); }
   else { if (remote) pl.det = true; else G.det = true; for (const b of G.bombs) if ((b.o || 0) === who) b.t = Infinity; }
@@ -825,23 +877,21 @@ function duelTake(pl, it) {
 }
 function duelKill(pl) {
   if (pl.dead) return;
-  pl.dead = 1.4; const [x, y] = logicalPos(pl); deathFx(x, y, pl !== V.rp);
-  if (!V.ending) { V.ending = true; V.endT = 1.1; }   // a short wait: both may fall to the same blast
+  pl.dead = 1.4; const [x, y] = logicalPos(pl); deathFx(x, y, pl.slot === V.me);
+  if (!V.ending) { V.ending = true; V.endT = 1.1; }   // a short wait: several may fall to the same blast
 }
 function sendSnapshot() {
-  const p = G.player, rp = V.rp;
   const msg = { t: 's', tm: r3(G.time),
-    h: [r3(p.x), r3(p.y), p.dir, p.moving ? 1 : 0, p.dead ? 1 : 0, p.inv > 0 ? 1 : 0],
-    g: [rp.dead ? 1 : 0, rp.inv > 0 ? 1 : 0, rp.bombsMax, rp.range, rp.det ? 1 : 0],
+    pl: V.ps.map(q => { if (!q) return null; const [x, y] = logicalPos(q), own = q.slot === V.me;
+      return [r3(x), r3(y), q.dir, q.moving ? 1 : 0, q.gone ? 2 : q.dead ? 1 : 0, q.inv > 0 ? 1 : 0, own ? G.bombsMax : q.bombsMax, own ? G.range : q.range, (own ? G.det : q.det) ? 1 : 0]; }),
     e: G.enemies.map(e => [e.id, e.type, r3(e.x), r3(e.y), e.dir >= 0 ? e.dir : e.last, e.dead ? 1 : 0]),
     b: G.bombs.map(b => [b.cx, b.cy, b.t === Infinity ? -1 : r3(b.t), r3(b.age), b.o || 0]),
     ev: V.ev.splice(0) };
-  // every couple of seconds the whole map goes along, so one lost message can never leave the two screens different
+  // every couple of seconds the whole map goes along, so one lost message can never leave the screens different
   if (--V.syncN <= 0) { V.syncN = 30; msg.gr = Array.from(G.grid.subarray(0, N)).join(''); msg.it = V.items.filter(q => q.revealed && !q.taken).map(q => [q.k, q.type]); }
   netSend(msg);
 }
 function applyEvent(ev) {
-  const p = G.player, rp = V.rp;
   if (ev[0] === 'x') {
     const arms = [ev[3], ev[4], ev[5], ev[6]];
     G.blasts.push({ cx: ev[1], cy: ev[2], arms, t: FLAME, rot: rnd(TAU) }); G.shake = Math.min(1, G.shake + .5); sfx.boom();
@@ -850,16 +900,23 @@ function applyEvent(ev) {
     G.burn[ev[1]] = BURN; const col = biomeOf(G.level).crate;
     for (let j = 0; j < 7; j++) confetti(ev[1] % COLS + .5, Math.floor(ev[1] / COLS) + .5, col, 3, .14);
   } else if (ev[0] === 'r') V.items.push({ k: ev[1], type: ev[2], revealed: true, taken: false });
-  else if (ev[0] === 'i') { const it = V.items.find(q => q.k === ev[3]); if (it) it.taken = true; itemFx(ev[1] === 1 ? p : rp, ev[2], ev[1] === 1); }
+  else if (ev[0] === 'i') { const it = V.items.find(q => q.k === ev[3]), pl = V.ps[ev[1]]; if (it) it.taken = true; if (pl) itemFx(pl, ev[2], ev[1] === V.me); }
 }
 function applySnapshot(d) {
-  const p = G.player, rp = V.rp; if (!V.on || !rp) return;
+  if (!V.on || !Array.isArray(d.pl)) return;
   G.time = d.tm;
-  rp.nx = d.h[0]; rp.ny = d.h[1]; rp.dir = d.h[2]; rp.moving = !!d.h[3]; rp.inv = d.h[5] ? Math.max(rp.inv, .12) : 0;
-  if (d.h[4] && !rp.dead) { rp.dead = 1.4; deathFx(rp.nx, rp.ny, false); }
-  if (d.g[0] && !p.dead) { p.dead = 1.4; deathFx(p.x, p.y, true); }
-  if (!d.g[1]) p.inv = Math.min(p.inv, .12);
-  G.bombsMax = d.g[2]; G.range = d.g[3]; G.det = !!d.g[4];
+  d.pl.forEach((a, s) => {
+    const q = V.ps[s]; if (!a || !q) return;
+    if (s === V.me) {
+      if (a[4] && !q.dead) { q.dead = 1.4; deathFx(q.x, q.y, true); }
+      if (!a[5]) q.inv = Math.min(q.inv, .12);
+      G.bombsMax = a[6]; G.range = a[7]; G.det = !!a[8];
+    } else {
+      q.nx = a[0]; q.ny = a[1]; q.dir = a[2]; q.moving = !!a[3]; q.inv = a[5] ? Math.max(q.inv, .12) : 0;
+      if (a[4] === 2) q.gone = true;
+      else if (a[4] && !q.dead) { q.dead = 1.4; deathFx(q.nx, q.ny, false); }
+    }
+  });
   const seen = new Set();
   for (const a of d.e) {
     seen.add(a[0]); let e = G.enemies.find(q => q.id === a[0]);
@@ -875,7 +932,7 @@ function applySnapshot(d) {
     V.items = d.it.map(a => ({ k: a[0], type: a[1], revealed: true, taken: false }));
   }
 }
-/* the guest only plays back what the host reports */
+/* a guest only plays back what the host reports */
 function guestWorld(dt) {
   for (let k = 0; k < N; k++) if (G.burn[k] > 0) { G.burn[k] -= dt; if (G.burn[k] <= 0) G.grid[k] = EMPTY; }
   for (const b of G.blasts) b.t -= dt;
@@ -887,20 +944,25 @@ function guestWorld(dt) {
   G.time = Math.max(0, G.time - dt);
 }
 function duelUpdate(dt) {
-  const p = G.player, rp = V.rp, host = V.role === 'host';
+  const p = G.player, host = V.role === 'host';
   if (G.mode === 'between') { if (host) { V.nextT -= dt; if (V.nextT <= 0) duelStartHost(true); } return; }
-  if (G.mode !== 'play' || !rp) return;
-  // both sides talk 20 times a second; ten silent seconds means the other one is gone
-  if (Date.now() - V.lastRx > 10000) { onDrop(); return; }
+  if (G.mode !== 'play') return;
+  // everyone talks about 15 times a second; ten silent seconds means that player is gone
+  if (host) { for (const q of V.ps) if (q && q.slot && !q.gone && Date.now() - q.lastRx > 10000) dropGuest(q.slot); if (G.mode !== 'play') return; }
+  else if (Date.now() - V.lastRx > 10000) { onDrop(); return; }
   if (host) worldStep(dt); else guestWorld(dt);
   if (!p.dead) moveLocal(dt); else p.dead = Math.max(.001, p.dead - dt);
-  rp.inv = Math.max(0, rp.inv - dt); if (rp.dead) rp.dead = Math.max(.001, rp.dead - dt);
-  const gx = rp.nx - rp.x, gy = rp.ny - rp.y, kk = Math.min(1, dt * 14);
-  if (Math.abs(gx) + Math.abs(gy) > 3) { rp.x = rp.nx; rp.y = rp.ny; } else { rp.x += gx * kk; rp.y += gy * kk; }
-  if (rp.moving) rp.anim += dt * 11;
+  const kk = Math.min(1, dt * 14);
+  for (const q of V.ps) {
+    if (!q || q.slot === V.me) continue;
+    q.inv = Math.max(0, q.inv - dt); if (q.dead) q.dead = Math.max(.001, q.dead - dt);
+    const gx = q.nx - q.x, gy = q.ny - q.y;
+    if (Math.abs(gx) + Math.abs(gy) > 3) { q.x = q.nx; q.y = q.ny; } else { q.x += gx * kk; q.y += gy * kk; }
+    if (q.moving) q.anim += dt * 11;
+  }
   if (host) {
     G.time = Math.max(0, G.time - dt);
-    for (const pl of [p, rp]) {
+    for (const pl of livePlayers()) {
       if (pl.dead) continue;
       const [x, y] = logicalPos(pl), cx = Math.floor(x), cy = Math.floor(y), c = idx(cx, cy);
       if (Math.abs(x - cx - .5) < .4 && Math.abs(y - cy - .5) < .4) for (const it of V.items) if (it.revealed && !it.taken && it.k === c) duelTake(pl, it);
@@ -910,70 +972,90 @@ function duelUpdate(dt) {
         if (hit) duelKill(pl);
       }
     }
-    if (V.ending) { V.endT -= dt; if (V.endT <= 0) { duelFinish(p.dead && rp.dead ? 'draw' : p.dead ? 'guest' : 'host'); return; } }
-    else if (G.time <= 0) { duelFinish('draw'); return; }
+    if (V.ending) {
+      V.endT -= dt;
+      if (V.endT <= 0) { const alive = livePlayers().filter(q => !q.dead); if (alive.length >= 2) V.ending = false; else { duelFinish(alive.length ? alive[0].slot : -1); return; } }
+    } else if (G.time <= 0) { duelFinish(-1); return; }
   }
   V.sendT -= dt;
   if (V.sendT <= 0) { V.sendT = .066; if (host) sendSnapshot(); else netSend({ t: 'p', x: r3(p.x), y: r3(p.y), d: p.dir, m: p.moving ? 1 : 0 }); }
 }
-function duelFinish(res) {
-  if (res === 'host') V.score[0]++; else if (res === 'guest') V.score[1]++;
-  const fin = Math.max(V.score[0], V.score[1]) >= DUEL_WINS;
-  sendSnapshot(); netSend({ t: 'end', r: res, sc: V.score, fin }); duelResult(res, fin);
+/* w is the slot of the last one standing, or -1 for a draw */
+function duelFinish(w) {
+  if (w >= 0) V.score[w]++;
+  const fin = Math.max(...V.score) >= DUEL_WINS;
+  sendSnapshot(); netSend({ t: 'end', w, sc: V.score, fin }); duelResult(w, fin);
 }
-function duelResult(res, fin) {
+function duelResult(w, fin) {
   stickEnd(); held.length = 0;
-  const won = res === V.role, st = scoreText();
+  const won = w === V.me, st = scoreText(), many = V.ps.filter(Boolean).length > 2;
   if (won) sfx.clear();
   if (!fin) {   // the round is over, the match goes on: a short breather, then the host deals a new map
     G.mode = 'between'; V.nextT = 3.4;
-    const why = res === 'draw' ? (G.time <= 0 ? t('drawTime') : t('drawBoth')) : won ? t('roundWon') : t('roundLost');
+    const why = w < 0 ? (G.time <= 0 ? t('drawTime') : t('drawNone')) : won ? t('roundWon') : many ? t('roundTo', t('c' + w)) : t('roundLost');
     showBanner(why, t('scoreTo', st, DUEL_WINS), 3.2);
     return;
   }
   G.mode = 'over';
   $('duelTitle').textContent = won ? t('matchWon') : t('matchLost');
-  $('duelText').textContent = (won ? t('finalWon', st) : t('finalLost', st));
+  $('duelText').textContent = won ? t('finalWonN', st) : many ? t('roundTo', t('c' + w)) + '. ' + t('finalLost', st) : t('finalLost', st);
   $('bAgain').hidden = false; $('bAgain').textContent = t('newMatch');
   showOnly('oDuel');
 }
-function remoteBomb() {
-  const rp = V.rp; if (!V.on || G.mode !== 'play' || !rp || rp.dead) return;
-  const cx = Math.floor(rp.nx), cy = Math.floor(rp.ny);
-  if (G.bombs.filter(b => b.o === 1).length >= rp.bombsMax || G.grid[idx(cx, cy)] !== EMPTY || bombAt(cx, cy)) return;
-  G.bombs.push({ cx, cy, t: rp.det ? Infinity : FUSE, age: 0, o: 1, r: rp.range });
+function remoteBomb(pl) {
+  if (!V.on || G.mode !== 'play' || !pl || pl.dead || pl.gone) return;
+  const cx = Math.floor(pl.nx), cy = Math.floor(pl.ny);
+  if (G.bombs.filter(b => b.o === pl.slot).length >= pl.bombsMax || G.grid[idx(cx, cy)] !== EMPTY || bombAt(cx, cy)) return;
+  G.bombs.push({ cx, cy, t: pl.det ? Infinity : FUSE, age: 0, o: pl.slot, r: pl.range });
+}
+/* host: one guest left or went silent; the match goes on while at least two players remain */
+function dropGuest(slot) {
+  if (slot < 1 || !V.ids[slot]) return;
+  V.ids[slot] = null; const q = V.ps[slot];
+  if (G.mode === 'wait') { updateWaitSheet(); netStatus(t('guestLeftWait')); return; }
+  if (q) { q.gone = true; if (!q.dead) q.dead = .001; }
+  if (!guestCount()) {
+    if (V.on && G.mode !== 'over') { G.mode = 'over'; stickEnd(); $('duelTitle').textContent = t('lostT'); $('duelText').textContent = t('lostP'); $('bAgain').hidden = true; showOnly('oDuel'); }
+    else $('bAgain').hidden = true;
+  } else if (G.mode === 'play' && !V.ending) { V.ending = true; V.endT = .6; }
 }
 function onData(d) {
   if (!d || typeof d !== 'object') return;
   if (V.role === 'host') {
+    if (!d.i) return;
+    let s = V.ids.indexOf(d.i);
     if (d.t === 'hello') {
-      if (G.mode === 'wait' && !V.conn && d.i) { V.gid = d.i; V.conn = V.link; duelStartHost(); }
-      else if (d.i === V.gid && V.startMsg && G.mode === 'play' && Date.now() - V.startAt < 5000) netSend(V.startMsg);   // the first "start" got lost
+      if (G.mode === 'wait') {
+        if (s < 0) { s = [1, 2, 3].find(q => q < V.size && !V.ids[q]); if (s === undefined) { netSend({ t: 'full', to: d.i }); return; } V.ids[s] = d.i; }
+        if (V.size === 2) { duelStartHost(); return; }
+        const n = 1 + guestCount(); netSend({ t: 'joined', to: d.i, n, of: V.size }); updateWaitSheet(); netStatus('');
+        if (n === V.size) duelStartHost();
+      } else if (s > 0) { if (V.startMsg && G.mode === 'play' && Date.now() - V.startAt < 5000) netSend(V.startMsg); }   // their "start" got lost
+      else netSend({ t: 'full', to: d.i });
       return;
     }
-    if (d.i !== V.gid || !V.conn) return;
-    V.lastRx = Date.now();
-    const rp = V.rp;
-    if (d.t === 'bye') onDrop();
-    else if (d.t === 'p' && rp && !rp.dead && isFinite(d.x) && isFinite(d.y)) { rp.nx = Math.max(1, Math.min(COLS - 1, +d.x)); rp.ny = Math.max(1, Math.min(ROWS - 1, +d.y)); rp.dir = d.d | 0; rp.moving = !!d.m; }
-    else if (d.t === 'b') remoteBomb();
-    else if (d.t === 'd') { const b = rp && rp.det && G.mode === 'play' ? G.bombs.find(q => q.o === 1) : null; if (b) explode(b); }
+    if (s < 1) return;
+    const q = V.ps[s]; if (q) q.lastRx = Date.now();
+    if (d.t === 'bye') dropGuest(s);
+    else if (d.t === 'p' && q && !q.dead && isFinite(d.x) && isFinite(d.y)) { q.nx = Math.max(1, Math.min(COLS - 1, +d.x)); q.ny = Math.max(1, Math.min(ROWS - 1, +d.y)); q.dir = d.d | 0; q.moving = !!d.m; }
+    else if (d.t === 'b') remoteBomb(q);
+    else if (d.t === 'd') { const b = q && q.det && G.mode === 'play' ? G.bombs.find(z => z.o === s) : null; if (b) explode(b); }
     else if (d.t === 'again' && V.on && G.mode === 'over') duelStartHost();
   } else {
-    if (d.to !== V.myId) return;
+    if (d.to !== V.myId && !(d.to === 'all' && (V.on || V.joined || d.t === 'start'))) return;
     V.lastRx = Date.now();
     if (d.t === 'bye') onDrop();
+    else if (d.t === 'joined') { V.joined = true; netStatus(t('joinedWait', d.n | 0, d.of | 0)); }
+    else if (d.t === 'full') { if (!V.on) { const c = V.link; clearInterval(V.helloT); clearTimeout(V.timer); V.link = null; V.conn = null; V.joined = false; try { c.close(); } catch (e) { /* closed */ } netStatus(t('roomFull')); } }
     else if (d.t === 'start') { if (!V.on || G.mode === 'over' || G.mode === 'between') duelStartGuest(d); }
     else if (d.t === 's') applySnapshot(d);
-    else if (d.t === 'end' && V.on && G.mode === 'play') { if (Array.isArray(d.sc)) V.score = [d.sc[0] | 0, d.sc[1] | 0]; duelResult(d.r, !!d.fin); }
+    else if (d.t === 'end' && V.on && G.mode === 'play') { if (Array.isArray(d.sc)) V.score = [0, 1, 2, 3].map(s => d.sc[s] | 0); duelResult(typeof d.w === 'number' ? d.w : -1, !!d.fin); }
   }
 }
-/* the other player is gone (said goodbye, or went silent) */
+/* guest: the host is gone (said goodbye, or went silent) */
 function onDrop() {
-  if (!V.conn) return;
-  if (V.role === 'host') { V.conn = null; V.gid = null; }   // the room itself stays open
-  else { const c = V.link; V.conn = null; V.link = null; clearInterval(V.helloT); clearTimeout(V.timer); try { c.close(); } catch (e) { /* already closed */ } }
-  if (G.mode === 'wait') { netStatus(t('guestLeftWait')); return; }
+  if (!V.conn || V.role === 'host') return;
+  const c = V.link; V.conn = null; V.link = null; V.joined = false; clearInterval(V.helloT); clearTimeout(V.timer); try { c.close(); } catch (e) { /* already closed */ }
   if (V.on) {
     G.mode = 'over'; stickEnd();
     $('duelTitle').textContent = t('lostT'); $('duelText').textContent = t('lostP'); $('bAgain').hidden = true;
@@ -982,7 +1064,7 @@ function onDrop() {
 }
 /* our own line to the relay went down */
 function linkLost() {
-  V.conn = null; V.link = null; clearInterval(V.helloT); clearTimeout(V.timer);
+  V.conn = null; V.link = null; V.joined = false; clearInterval(V.helloT); clearTimeout(V.timer);
   if (V.on && G.mode !== 'over') {
     const waiting = G.mode === 'wait';
     G.mode = 'over'; stickEnd();
@@ -992,13 +1074,13 @@ function linkLost() {
 }
 function leaveDuel() {
   clearTimeout(V.timer); clearInterval(V.helloT); netSend({ t: 'bye' });
-  const c = V.link; V.conn = null; V.link = null; V.on = false; V.role = null; V.rp = null; V.items = []; V.gid = null; V.startMsg = null;
+  const c = V.link; V.conn = null; V.link = null; V.on = false; V.role = null; V.ps = []; V.ids = [null, null, null, null]; V.me = 0; V.joined = false; V.items = []; V.startMsg = null;
   try { if (c) c.close(); } catch (e) { /* already closed */ }
   COLS = COLS_BASE; ROWS = ROWS_BASE; N = COLS * ROWS; G.grid.fill(EMPTY); clearField(); G.bombsMax = 1; G.range = 1; G.det = false; G.score = 0;
   G.player = { x: 1.5, y: 1.5, dir: 2, travel: 2, moving: false, anim: 0, inv: 0, dead: 0 };
   netStatus('');
 }
-/* --- the line between the two players ---
+/* --- the line between the players ---
    Browsers on a phone network and on a home router often cannot reach each other directly, so both simply talk to a
    public MQTT relay over an ordinary secure web socket. Below is the small part of MQTT 3.1.1 the game needs. */
 // Our own relay comes first; the public test brokers are only a fallback if it cannot be reached.
@@ -1072,7 +1154,7 @@ function joinDuel(raw) {
   const code = String(raw || '').toUpperCase().replace(/[^A-Z]/g, '').slice(0, 5);
   if (code.length < 5) { netStatus(t('code5')); return; }
   ac(); if (V.link) leaveDuel();
-  V.role = 'guest'; V.myId = Math.random().toString(36).slice(2, 10); netStatus(t('connecting', code));
+  V.role = 'guest'; V.joined = false; V.myId = Math.random().toString(36).slice(2, 10); netStatus(t('connecting', code));
   const tp = roomTopics(code); let opened = false;
   const hello = () => netSend({ t: 'hello' });
   const link = V.link = V.conn = makeLink(relayOf(code), tp.h, tp.g, {
@@ -1082,7 +1164,7 @@ function joinDuel(raw) {
   });
   clearTimeout(V.timer);
   V.timer = setTimeout(() => {
-    if (V.on || V.link !== link) return;
+    if (V.on || V.joined || V.link !== link) return;
     clearInterval(V.helloT); link.close(); V.link = null; V.conn = null;
     netStatus(opened ? t('roomSilent', code) : t('netFail'));
   }, 15000);
@@ -1520,7 +1602,7 @@ function applyLang() {
   for (const el of document.querySelectorAll('[data-i18n-attr]')) for (const pair of el.dataset.i18nAttr.split(';')) { const [a, k] = pair.split(':'); el.setAttribute(a, t(k)); }
   for (const k in hudCache) delete hudCache[k];
   $('pauseTitle').textContent = t(V.on ? 'leaveT' : 'pauseT'); $('duelTitle').textContent = t('duelT'); $('bAgain').textContent = t('again'); $('bCopy').textContent = t('copy');
-  soundLabel(); refreshMenu(); buildBestiary(); buildLangs();
+  soundLabel(); refreshMenu(); buildBestiary(); buildLangs(); updateWaitSheet();
   if (SANDBOX) {   // inside the preview the duel cannot connect: point to the hosted game instead
     const a = document.createElement('a'); a.href = PAGES_URL; a.target = '_blank'; a.rel = 'noopener'; a.textContent = PAGES_URL;
     $('duelWhere').textContent = t('sandboxNote'); $('duelWhere').appendChild(a);
@@ -1530,7 +1612,7 @@ const hudCache = {};
 function setHud(id, v) { if (hudCache[id] !== v) { hudCache[id] = v; $(id).textContent = v; } }
 function updateHud() {
   const L = G.mode === 'menu' ? save.max : G.level;
-  if (V.on) { setHud('hLevel', t('hudDuel')); setHud('hBiome', V.role === 'host' ? t('youRed') : t('youTeal')); }
+  if (V.on) { setHud('hLevel', t('hudDuel')); setHud('hBiome', t('c' + V.me)); }
   else { setHud('hLevel', pad2(L) + '/' + MAXL); setHud('hBiome', t(biomeOf(L).key)); }
   const menu = G.mode === 'menu';
   setHud('hTime', String(Math.ceil(G.time))); setHud('hScore', V.on ? scoreText() : String(menu ? save.score | 0 : G.score)); setHud('hLives', String(V.on ? (G.player.dead ? 0 : 1) : menu ? save.lives : Math.max(0, G.lives)));
@@ -1557,10 +1639,15 @@ function setMapChoice(wide) { V.wide = !!wide; $('mapStd').setAttribute('aria-pr
 $('mapStd').addEventListener('click', () => setMapChoice(false));
 $('mapWide').addEventListener('click', () => setMapChoice(true));
 setMapChoice(V.wide);
+function setSizeChoice(n) { V.size = n === 4 ? 4 : 2; $('plTwo').setAttribute('aria-pressed', String(V.size === 2)); $('plFour').setAttribute('aria-pressed', String(V.size === 4)); save.duelSize = V.size; writeSave(save); }
+$('plTwo').addEventListener('click', () => setSizeChoice(2));
+$('plFour').addEventListener('click', () => setSizeChoice(4));
+setSizeChoice(V.size);
+$('bStart').addEventListener('click', () => { if (V.role === 'host' && G.mode === 'wait') duelStartHost(); });
 $('bJoin').addEventListener('click', () => joinDuel($('joinCode').value));
 $('joinCode').addEventListener('keydown', ev => { ev.stopPropagation(); if (ev.key === 'Enter') joinDuel($('joinCode').value); });
 $('bAgain').addEventListener('click', () => {
-  if (V.role === 'host') { if (V.conn) duelStartHost(); }
+  if (V.role === 'host') duelStartHost();
   else { netSend({ t: 'again' }); $('bAgain').textContent = t('waitHost'); }
 });
 $('bCopy').addEventListener('click', () => {
@@ -1729,8 +1816,8 @@ function drawPlayer(c, x, y, s, p, t) {
   const st = p.moving ? Math.sin(p.anim) * s * .07 : 0, hor = p.dir === 1 || p.dir === 3;
   rr(c, -s * .22 + (hor ? st : 0), s * .24 + (hor ? 0 : st * .5), s * .17, s * .12, s * .04); fs(c, INK, s, .02);
   rr(c, s * .05 - (hor ? st : 0), s * .24 - (hor ? 0 : st * .5), s * .17, s * .12, s * .04); fs(c, INK, s, .02);
-  const ink2 = p.alt ? TEAL : RED;   // the second duellist is printed in teal
-  rr(c, -s * .27, -s * .22 - bob, s * .54, s * .5, s * .16); c.fillStyle = p.alt ? '#e4f4ef' : CREAM; c.fill();
+  const ink2 = SLOT_INK[p.slot || 0];   // every duellist is printed in their own ink
+  rr(c, -s * .27, -s * .22 - bob, s * .54, s * .5, s * .16); c.fillStyle = SLOT_BODY[p.slot || 0]; c.fill();
   c.save(); c.clip(); c.fillStyle = ink2; c.fillRect(-s * .3, s * .1 - bob, s * .6, s * .08); c.restore();
   rr(c, -s * .27, -s * .22 - bob, s * .54, s * .5, s * .16); c.strokeStyle = INK; c.lineWidth = s * .055; c.stroke();
   if (p.dir !== 0) {
@@ -1849,7 +1936,7 @@ function render() {
     drawEnemy(c, e.type, ex, ey, s, t, e.dir >= 0 ? e.dir : e.last, e.ph);
     c.restore();
   }
-  if (V.on && V.rp) drawPlayer(c, ox + V.rp.x * s, oy + V.rp.y * s, s, V.rp, t);
+  if (V.on) for (const q of V.ps) if (q && q.slot !== V.me && !q.gone) drawPlayer(c, ox + q.x * s, oy + q.y * s, s, q, t);
   drawPlayer(c, ox + G.player.x * s, oy + G.player.y * s, s, G.player, t);
   // blasts: layered paper strips, one ink at a time so chained explosions fuse into one shape
   c.lineCap = 'round'; c.lineJoin = 'round';

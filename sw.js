@@ -1,6 +1,6 @@
 /* Подрывник Искра: offline support. The page itself is always fetched fresh when there is a network
    (so updates arrive at once) and served from the cache only when there is none. Fonts and icons never change, so they are cached. */
-const CACHE = 'iskra-v1';
+const CACHE = 'iskra-v2';
 const SHELL = ['./', 'manifest.webmanifest', 'fonts/fonts.css', 'icons/icon-192.png',
   'fonts/DelaGothicOne-400-cyrillic.woff2', 'fonts/DelaGothicOne-400-latin.woff2',
   'fonts/GolosText-400-cyrillic.woff2', 'fonts/GolosText-400-latin.woff2'];
