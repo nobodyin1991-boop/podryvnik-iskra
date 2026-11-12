@@ -56,6 +56,7 @@ button:focus-visible{outline:3px solid var(--teal); outline-offset:2px}
 .stage{position:relative; flex:1; min-height:0; margin:0 5px 5px 0; border:3px solid var(--ink); border-radius:6px; overflow:hidden; background:var(--ink); box-shadow:5px 5px 0 var(--ink); touch-action:none}
 #cv{position:absolute; inset:0; width:100%; height:100%; display:block}
 .grain{position:absolute; inset:0; pointer-events:none; opacity:.55}
+.ping{position:absolute; z-index:2; right:6px; top:6px; font-size:11px; font-weight:600; font-variant-numeric:tabular-nums; color:#fffaf0; background:rgba(29,27,46,.6); padding:1px 6px; border-radius:3px; pointer-events:none}
 
 .banner{position:absolute; left:0; right:0; top:34%; display:flex; justify-content:center; padding:0 16px; pointer-events:none; opacity:0; transform:translateY(10px) rotate(-2deg); transition:opacity .2s, transform .2s}
 .banner.show{opacity:1; transform:rotate(-2deg)}
@@ -213,6 +214,7 @@ body.touch.menu-open .controls{display:none}
 <main class="stage" id="stage">
   <canvas id="cv"></canvas>
   <div class="grain" id="grain"></div>
+  <div class="ping" id="ping" hidden></div>
   <div class="banner" id="banner"><div><h2 id="banT"></h2><p id="banS"></p></div></div>
 
   <section class="overlay menu" id="oMenu">
@@ -846,7 +848,7 @@ const scoreText = () => {   // two players: mine first; more: in slot order (red
   return act.map(s => V.score[s]).join(':');
 };
 function duelBegin() {
-  V.on = true; V.pend = []; V.lastRx = Date.now(); G.mode = 'play'; G.paused = false; G.score = 0; G.bombsMax = 1; G.range = 1; G.det = false;
+  V.on = true; V.pend = []; V.ping = 0; V.pkSeen = -1; V.lastRx = Date.now(); G.mode = 'play'; G.paused = false; G.score = 0; G.bombsMax = 1; G.range = 1; G.det = false;
   clearTimeout(V.timer); showOnly(null); ensureTiles(); snapCam();
   showBanner(t('round', V.round), V.round === 1 ? t('youAre', t('c' + V.me), DUEL_WINS) : t('scoreIs', scoreText()), 2.6);
 }
@@ -924,6 +926,7 @@ function sendSnapshot() {
       return [r3(x), r3(y), q.dir, q.moving ? 1 : 0, q.gone ? 2 : q.dead ? 1 : 0, q.inv > 0 ? 1 : 0, own ? G.bombsMax : q.bombsMax, own ? G.range : q.range, (own ? G.det : q.det) ? 1 : 0]; }),
     e: G.enemies.map(e => [e.id, e.type, r3(e.x), r3(e.y), e.dir >= 0 ? e.dir : e.last, e.dead ? 1 : 0]),
     b: G.bombs.map(b => [b.cx, b.cy, b.t === Infinity ? -1 : r3(b.t), r3(b.age), b.o || 0]),
+    pk: V.ps.map(q => (q && q.pkAt ? [q.pk, Date.now() - q.pkAt] : 0)),   // each player's last time stamp and how long the host held it
     ev: V.ev.splice(0) };
   // every couple of seconds the whole map goes along, so one lost message can never leave the screens different
   if (--V.syncN <= 0) { V.syncN = 60; msg.gr = Array.from(G.grid.subarray(0, N)).join(''); msg.it = V.items.filter(q => q.revealed && !q.taken).map(q => [q.k, q.type]); }
@@ -944,6 +947,8 @@ function applyEvent(ev) {
 function applySnapshot(d) {
   if (!V.on || !Array.isArray(d.pl)) return;
   G.time = d.tm;
+  const pk = Array.isArray(d.pk) ? d.pk[V.me] : 0;
+  if (pk && pk[0] !== V.pkSeen) { V.pkSeen = pk[0]; const rt = ((Date.now() % 100000) - pk[0] + 100000) % 100000 - (pk[1] | 0); if (rt >= 0 && rt < 5000) V.ping = V.ping ? V.ping * .85 + rt * .15 : rt; }
   d.pl.forEach((a, s) => {
     const q = V.ps[s]; if (!a || !q) return;
     if (s === V.me) {
@@ -982,7 +987,7 @@ function guestWorld(dt) {
   for (const b of G.blasts) b.t -= dt;
   G.blasts = G.blasts.filter(b => b.t > 0);
   for (const b of G.bombs) { b.age += dt; if (b.t !== Infinity) b.t = Math.max(.02, b.t - dt); }
-  const k = Math.min(1, dt * 14);
+  const k = Math.min(1, dt * 20);
   for (const e of G.enemies) { if (e.dead) { e.dead -= dt; continue; } e.x += (e.tx - e.x) * k; e.y += (e.ty - e.y) * k; }
   G.enemies = G.enemies.filter(e => e.dead === 0 || e.dead > .01);
   G.time = Math.max(0, G.time - dt);
@@ -1022,7 +1027,7 @@ function duelUpdate(dt) {
     } else if (G.time <= 0) { duelFinish(-1); return; }
   }
   V.sendT -= dt;
-  if (V.sendT <= 0) { V.sendT = .033; if (host) sendSnapshot(); else netSend({ t: 'p', x: r3(p.x), y: r3(p.y), d: p.dir, m: p.moving ? 1 : 0 }); }
+  if (V.sendT <= 0) { V.sendT = .033; if (host) sendSnapshot(); else netSend({ t: 'p', x: r3(p.x), y: r3(p.y), d: p.dir, m: p.moving ? 1 : 0, k: Date.now() % 100000 }); }
 }
 /* w is the slot of the last one standing, or -1 for a draw */
 function duelFinish(w) {
@@ -1088,7 +1093,7 @@ function onData(d) {
     const q = V.ps[s]; if (q) q.lastRx = Date.now();
     if (d.t === 'bye') dropGuest(s);
     else if (d.t === 'go') { if (V.serve && s === 0 && G.mode === 'wait') duelStartHost(); }
-    else if (d.t === 'p' && q && !q.dead && isFinite(d.x) && isFinite(d.y)) { q.nx = Math.max(1, Math.min(COLS - 1, +d.x)); q.ny = Math.max(1, Math.min(ROWS - 1, +d.y)); q.dir = d.d | 0; q.moving = !!d.m; }
+    else if (d.t === 'p' && q && !q.dead && isFinite(d.x) && isFinite(d.y)) { q.nx = Math.max(1, Math.min(COLS - 1, +d.x)); q.ny = Math.max(1, Math.min(ROWS - 1, +d.y)); q.dir = d.d | 0; q.moving = !!d.m; if (d.k >= 0) { q.pk = d.k | 0; q.pkAt = Date.now(); } }
     else if (d.t === 'b') remoteBomb(q, d);
     else if (d.t === 'd') { const b = q && q.det && G.mode === 'play' ? G.bombs.find(z => z.o === s) : null; if (b) { explode(b); V.sendT = 0; } }
     else if (d.t === 'again' && V.on && G.mode === 'over') duelStartHost();
@@ -1691,6 +1696,8 @@ function updateHud() {
   const menu = G.mode === 'menu';
   setHud('hTime', String(Math.ceil(G.time))); setHud('hScore', V.on ? scoreText() : String(menu ? save.score | 0 : G.score)); setHud('hLives', String(V.on ? (G.player.dead ? 0 : 1) : menu ? save.lives : Math.max(0, G.lives)));
   setHud('hBombs', String(G.bombsMax)); setHud('hRange', String(G.range)); setHud('hDet', G.det ? t('yes') : t('no'));
+  const pg = V.on && V.role === 'guest' && G.mode === 'play' && V.ping > 0 ? Math.round(V.ping) + ' ms' : '';   // there and back to the room server
+  if (hudCache.ping !== pg) { hudCache.ping = pg; $('ping').textContent = pg; $('ping').hidden = !pg; }
   const low = G.time <= 30 && G.mode !== 'menu';
   if (hudCache.low !== low) { hudCache.low = low; $('hTimeBox').classList.toggle('low', low); }
   if (hudCache.det !== G.det) { hudCache.det = G.det; $('hDetBox').classList.toggle('on', G.det); $('bDet').classList.toggle('on', G.det); }
