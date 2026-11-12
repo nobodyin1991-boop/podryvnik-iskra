@@ -774,8 +774,10 @@ function genLevel(L) {
 }
 
 /* ---------- duel over the network ----------
-   One browser hosts: it owns the map, the bombs, the fire and the tenants. Each player moves their own Искра
-   locally (so steering stays instant) and reports the position; the host decides who picked what up and who got hit. */
+   One side hosts: it owns the map, the bombs, the fire and the tenants. Each player moves their own Искра
+   locally (so steering stays instant) and reports the position; the host decides who picked what up and who got hit.
+   Normally the host is a room on the studio server (V.serve): it has no player of its own, so every player is a guest
+   and nobody sees the world sooner than the others. If the server cannot be reached, the creator's browser hosts as before. */
 const DUEL_WINS = 3, PAGES_URL = 'https://brozcogames.com/iskra/';
 const SANDBOX = /claude|anthropic/i.test(location.hostname);   // the Claude preview page blocks network sockets
 /* A match holds two to four players. Slot 0 is the host; every slot has its own corner and its own ink. */
@@ -788,6 +790,10 @@ function newPlayer(slot) { const [x, y] = corner(slot); return { slot, x, y, nx:
 const logicalPos = pl => pl.slot === V.me ? [pl.x, pl.y] : [pl.nx, pl.ny];   // others are known by their last reported position
 const livePlayers = () => V.ps.filter(q => q && !q.gone);
 const guestCount = () => V.ids.filter(Boolean).length;
+const LO = () => (V.serve ? 0 : 1);                       // the first slot a guest may take: a server room has no host player in slot 0
+const headCount = () => guestCount() + (V.serve ? 0 : 1);
+/* server room: tell everyone who is waiting how many are in, and which slot is theirs */
+function tellWait() { if (!V.serve) return; const n = guestCount(); V.ids.forEach((id, s) => { if (id) netSend({ t: 'joined', to: id, n, of: V.size, s }); }); }
 function nearestPlayer(cx, cy) {
   let best = null, bd = 1e9;
   for (const pl of livePlayers()) {
@@ -844,8 +850,8 @@ function duelBegin() {
   clearTimeout(V.timer); showOnly(null); ensureTiles(); snapCam();
   showBanner(t('round', V.round), V.round === 1 ? t('youAre', t('c' + V.me), DUEL_WINS) : t('scoreIs', scoreText()), 2.6);
 }
-function updateWaitSheet() {
-  const four = V.size === 4, n = 1 + guestCount();
+function updateWaitSheet(nn) {
+  const four = V.size === 4, n = typeof nn === 'number' ? nn : 1 + guestCount();
   $('waitTitle').textContent = t(four ? 'waitT4' : 'waitT'); $('waitText').textContent = t(four ? 'waitP4' : 'waitP');
   $('waitCount').textContent = four ? t('playersIn', n, 4) : ''; $('waitCount').hidden = !four;
   $('bStart').hidden = !four; $('bStart').disabled = n < 2;
@@ -858,26 +864,39 @@ function hostWait() {
   $('waitCode').textContent = V.code; $('bCopy').textContent = t('copy'); $('duelInvite').hidden = false; updateWaitSheet();
   showOnly('oWait');
 }
+/* the player who created a server room: same waiting screen, but they are a guest like everyone else */
+function ownerWait(d) {
+  V.me = d.s | 0;
+  if (G.mode !== 'wait') {
+    genDuel(); V.on = true; V.ps = [newPlayer(V.me)]; G.player = V.ps[0]; G.score = 0; G.bombsMax = 1; G.range = 1; G.det = false;
+    G.mode = 'wait'; G.paused = false; ensureTiles(); snapCam(); hideBanner();
+    $('duelUrl').value = location.href.split('#')[0] + '#duel-' + V.code;
+    $('waitCode').textContent = V.code; $('bCopy').textContent = t('copy'); $('duelInvite').hidden = false;
+    showOnly('oWait'); netStatus(t('roomOpen', V.code));
+  }
+  updateWaitSheet(d.n | 0);
+}
 function duelStartHost(keepScore) {
-  if (!guestCount()) return;
+  if (headCount() < 2) return;
   if (G.mode !== 'wait') genDuel();          // every round gets a fresh map; the very first one uses the map the host waited on
   if (keepScore === true) V.round++; else { V.score = [0, 0, 0, 0]; V.round = 1; }
-  V.me = 0; V.ps = [0, 1, 2, 3].map(s => (s === 0 || V.ids[s]) ? newPlayer(s) : null); G.player = V.ps[0];
+  V.me = V.serve ? -1 : 0; V.ps = [0, 1, 2, 3].map(s => ((!V.serve && s === 0) || V.ids[s]) ? newPlayer(s) : null);
+  G.player = V.serve ? { x: 1.5, y: 1.5, dir: 2, travel: 2, moving: false, anim: 0, inv: 0, dead: 1 } : V.ps[0];
   V.syncN = 30; V.startAt = Date.now();
-  V.startMsg = { t: 'start', to: 'all', ids: V.ids, cols: COLS, rows: ROWS, level: G.level, time: G.time, sc: V.score, rd: V.round, grid: Array.from(G.grid.subarray(0, N)) };
+  V.startMsg = { t: 'start', to: 'all', sv: V.serve ? 1 : 0, ids: V.ids, cols: COLS, rows: ROWS, level: G.level, time: G.time, sc: V.score, rd: V.round, grid: Array.from(G.grid.subarray(0, N)) };
   netSend(V.startMsg);
   duelBegin();
 }
 function duelStartGuest(d) {
   const slot = Array.isArray(d.ids) ? d.ids.indexOf(V.myId) : -1;
-  if (slot < 1 || !d.grid || !(d.cols * d.rows <= MAXN)) return;     // this match was started without us
+  if (slot < (d.sv ? 0 : 1) || !d.grid || !(d.cols * d.rows <= MAXN)) return;     // this match was started without us
   clearInterval(V.helloT);
   COLS = d.cols; ROWS = d.rows; N = COLS * ROWS;
   G.grid.fill(EMPTY); clearField(); V.items = [];
   for (let k = 0; k < N; k++) G.grid[k] = d.grid[k];
   G.level = d.level; G.time = d.time; G.timeUp = true; G.shake = 0;
   V.score = [0, 1, 2, 3].map(s => (Array.isArray(d.sc) ? d.sc[s] | 0 : 0)); V.round = d.rd | 0 || 1;
-  V.me = slot; V.ids = d.ids.slice(0, 4); V.ps = [0, 1, 2, 3].map(s => (s === 0 || V.ids[s]) ? newPlayer(s) : null); G.player = V.ps[slot];
+  V.me = slot; V.ids = d.ids.slice(0, 4); V.ps = [0, 1, 2, 3].map(s => ((!d.sv && s === 0) || V.ids[s]) ? newPlayer(s) : null); G.player = V.ps[slot];
   duelBegin();
 }
 function deathFx(x, y, mine) { for (let i = 0; i < 24; i++) confetti(x, y, pick([TEAL, CREAM, MUSTARD, RED]), 4); sfx.die(); if (mine) { buzz(120); stickEnd(); } }
@@ -973,7 +992,7 @@ function duelUpdate(dt) {
   if (G.mode === 'between') { if (host) { V.nextT -= dt; if (V.nextT <= 0) duelStartHost(true); } return; }
   if (G.mode !== 'play') return;
   // everyone talks about 30 times a second; ten silent seconds means that player is gone
-  if (host) { for (const q of V.ps) if (q && q.slot && !q.gone && Date.now() - q.lastRx > 10000) dropGuest(q.slot); if (G.mode !== 'play') return; }
+  if (host) { for (const q of V.ps) if (q && q.slot >= LO() && !q.gone && Date.now() - q.lastRx > 10000) dropGuest(q.slot); if (G.mode !== 'play') return; }
   else if (Date.now() - V.lastRx > 10000) { onDrop(); return; }
   if (host) worldStep(dt); else guestWorld(dt);
   if (!p.dead) moveLocal(dt); else p.dead = Math.max(.001, p.dead - dt);
@@ -1037,10 +1056,11 @@ function remoteBomb(pl, d) {
 }
 /* host: one guest left or went silent; the match goes on while at least two players remain */
 function dropGuest(slot) {
-  if (slot < 1 || !V.ids[slot]) return;
+  if (slot < LO() || !V.ids[slot]) return;
   V.ids[slot] = null; const q = V.ps[slot];
-  if (G.mode === 'wait') { updateWaitSheet(); netStatus(t('guestLeftWait')); return; }
+  if (G.mode === 'wait') { updateWaitSheet(); netStatus(t('guestLeftWait')); tellWait(); return; }
   if (q) { q.gone = true; if (!q.dead) q.dead = .001; }
+  if (V.serve && guestCount() < 2) { netSend({ t: 'bye' }); V.closed = true; G.mode = 'over'; return; }   // one player cannot go on alone: the room closes
   if (!guestCount()) {
     if (V.on && G.mode !== 'over') { G.mode = 'over'; stickEnd(); $('duelTitle').textContent = t('lostT'); $('duelText').textContent = t('lostP'); $('bAgain').hidden = true; showOnly('oDuel'); }
     else $('bAgain').hidden = true;
@@ -1053,17 +1073,21 @@ function onData(d) {
     let s = V.ids.indexOf(d.i);
     if (d.t === 'hello') {
       if (G.mode === 'wait') {
-        if (s < 0) { s = [1, 2, 3].find(q => q < V.size && !V.ids[q]); if (s === undefined) { netSend({ t: 'full', to: d.i }); return; } V.ids[s] = d.i; }
+        const fresh = s < 0;
+        if (fresh) { s = [0, 1, 2, 3].find(q => q >= LO() && q < V.size && !V.ids[q]); if (s === undefined) { netSend({ t: 'full', to: d.i }); return; } V.ids[s] = d.i; }
+        (V.hs || (V.hs = []))[s] = Date.now();
+        if (V.serve) { if (fresh) tellWait(); else netSend({ t: 'joined', to: d.i, n: guestCount(), of: V.size, s }); if (guestCount() === V.size) duelStartHost(); return; }
         if (V.size === 2) { duelStartHost(); return; }
         const n = 1 + guestCount(); netSend({ t: 'joined', to: d.i, n, of: V.size }); updateWaitSheet(); netStatus('');
         if (n === V.size) duelStartHost();
-      } else if (s > 0) { if (V.startMsg && G.mode === 'play' && Date.now() - V.startAt < 5000) netSend(V.startMsg); }   // their "start" got lost
+      } else if (s >= LO()) { if (V.startMsg && G.mode === 'play' && Date.now() - V.startAt < 5000) netSend(V.startMsg); }   // their "start" got lost
       else netSend({ t: 'full', to: d.i });
       return;
     }
-    if (s < 1) return;
+    if (s < LO()) return;
     const q = V.ps[s]; if (q) q.lastRx = Date.now();
     if (d.t === 'bye') dropGuest(s);
+    else if (d.t === 'go') { if (V.serve && s === 0 && G.mode === 'wait') duelStartHost(); }
     else if (d.t === 'p' && q && !q.dead && isFinite(d.x) && isFinite(d.y)) { q.nx = Math.max(1, Math.min(COLS - 1, +d.x)); q.ny = Math.max(1, Math.min(ROWS - 1, +d.y)); q.dir = d.d | 0; q.moving = !!d.m; }
     else if (d.t === 'b') remoteBomb(q, d);
     else if (d.t === 'd') { const b = q && q.det && G.mode === 'play' ? G.bombs.find(z => z.o === s) : null; if (b) { explode(b); V.sendT = 0; } }
@@ -1072,9 +1096,9 @@ function onData(d) {
     if (d.to !== V.myId && !(d.to === 'all' && (V.on || V.joined || d.t === 'start'))) return;
     V.lastRx = Date.now();
     if (d.t === 'bye') onDrop();
-    else if (d.t === 'joined') { V.joined = true; netStatus(t('joinedWait', d.n | 0, d.of | 0)); }
+    else if (d.t === 'joined') { V.joined = true; if (V.owner && (!V.on || G.mode === 'wait')) ownerWait(d); else if (!V.on) netStatus(t('joinedWait', d.n | 0, d.of | 0)); }
     else if (d.t === 'full') { if (!V.on) { const c = V.link; clearInterval(V.helloT); clearTimeout(V.timer); V.link = null; V.conn = null; V.joined = false; try { c.close(); } catch (e) { /* closed */ } netStatus(t('roomFull')); } }
-    else if (d.t === 'start') { if (!V.on || G.mode === 'over' || G.mode === 'between') duelStartGuest(d); }
+    else if (d.t === 'start') { if (!V.on || G.mode === 'over' || G.mode === 'between' || G.mode === 'wait') duelStartGuest(d); }
     else if (d.t === 's') applySnapshot(d);
     else if (d.t === 'end' && V.on && G.mode === 'play') { if (Array.isArray(d.sc)) V.score = [0, 1, 2, 3].map(s => d.sc[s] | 0); duelResult(typeof d.w === 'number' ? d.w : -1, !!d.fin); }
   }
@@ -1101,7 +1125,7 @@ function linkLost() {
 }
 function leaveDuel() {
   clearTimeout(V.timer); clearInterval(V.helloT); netSend({ t: 'bye' });
-  const c = V.link; V.conn = null; V.link = null; V.on = false; V.role = null; V.ps = []; V.ids = [null, null, null, null]; V.me = 0; V.joined = false; V.items = []; V.startMsg = null;
+  const c = V.link; V.conn = null; V.link = null; V.on = false; V.role = null; V.ps = []; V.ids = [null, null, null, null]; V.me = 0; V.joined = false; V.owner = false; V.items = []; V.startMsg = null;
   try { if (c) c.close(); } catch (e) { /* already closed */ }
   COLS = COLS_BASE; ROWS = ROWS_BASE; N = COLS * ROWS; G.grid.fill(EMPTY); clearField(); G.bombsMax = 1; G.range = 1; G.det = false; G.score = 0;
   G.player = { x: 1.5, y: 1.5, dir: 2, travel: 2, moving: false, anim: 0, inv: 0, dead: 0 };
@@ -1162,14 +1186,29 @@ const roomTopics = code => ({ h: 'iskra-duel/v1/' + code + '/h', g: 'iskra-duel/
 const relayOf = code => RELAYS[Math.max(0, Math.min(RELAYS.length - 1, Math.floor(CODE_ABC.indexOf(code[0]) / 8)))];
 function netStatus(t) { for (const id of ['duelStatus', 'waitStatus']) { $(id).textContent = t; $(id).hidden = !t; } }
 function netFail() { netStatus(SANDBOX ? t('netSandbox', PAGES_URL) : t('netFail')); }
-function hostDuel(tryN) {
+/* Create a duel. The room is opened on the studio server, and the creator walks in as an ordinary player.
+   Only if the server does not answer does this browser host the match itself (hostLocal). */
+function hostDuel() {
+  ac(); if (V.link) leaveDuel();
+  if (window.IskraLobby === false) { hostLocal(0); return; }
+  netStatus(t('creating'));
+  const id = Math.random().toString(36).slice(2, 10); let done = false;
+  const fall = () => { if (done) return; done = true; clearTimeout(V.timer); if (V.link === link) { V.link = null; link.close(); } hostLocal(0); };
+  const link = V.link = makeLink(RELAYS[0], 'iskra-duel/v1/lobby/r/' + id, 'iskra-duel/v1/lobby/q', {
+    up() { if (V.link === link && !done) link.send({ t: 'new', i: id, size: V.size, wide: V.wide ? 1 : 0 }); },
+    msg(d) { if (d && d.t === 'busy' && V.link === link) { fall(); return; } if (done || V.link !== link || !d || d.t !== 'room' || !/^[A-H][A-Z]{4}$/.test(d.code)) return; done = true; clearTimeout(V.timer); V.link = null; link.close(); joinDuel(d.code, true); },
+    down() { if (V.link === link) fall(); },
+  });
+  clearTimeout(V.timer); V.timer = setTimeout(fall, 3500);
+}
+function hostLocal(tryN) {
   tryN = typeof tryN === 'number' ? tryN : 0;
   ac(); if (V.link) leaveDuel();
   if (tryN >= RELAYS.length) { netFail(); return; }
   V.role = 'host'; netStatus(t('creating'));
   V.code = CODE_ABC[tryN * 8 + ri(8)]; for (let i = 0; i < 4; i++) V.code += CODE_ABC[ri(CODE_ABC.length)];
   const tp = roomTopics(V.code); let opened = false;
-  const next = () => { if (V.link !== link || opened) return; link.close(); V.link = null; hostDuel(tryN + 1); };   // this relay is unreachable: try the next one
+  const next = () => { if (V.link !== link || opened) return; link.close(); V.link = null; hostLocal(tryN + 1); };   // this relay is unreachable: try the next one
   const link = V.link = makeLink(RELAYS[tryN], tp.g, tp.h, {
     up() { if (V.link !== link) return; opened = true; clearTimeout(V.timer); $('duelUrl').value = location.href.split('#')[0] + '#duel-' + V.code; hostWait(); netStatus(t('roomOpen', V.code)); },
     msg(d) { if (V.link === link) onData(d); },
@@ -1177,11 +1216,11 @@ function hostDuel(tryN) {
   });
   clearTimeout(V.timer); V.timer = setTimeout(next, 8000);
 }
-function joinDuel(raw) {
+function joinDuel(raw, owner) {
   const code = String(raw || '').toUpperCase().replace(/[^A-Z]/g, '').slice(0, 5);
   if (code.length < 5) { netStatus(t('code5')); return; }
   ac(); if (V.link) leaveDuel();
-  V.role = 'guest'; V.joined = false; V.myId = Math.random().toString(36).slice(2, 10); netStatus(t('connecting', code));
+  V.role = 'guest'; V.joined = false; V.owner = owner === true; V.code = code; V.myId = Math.random().toString(36).slice(2, 10); netStatus(t('connecting', code));
   const tp = roomTopics(code); let opened = false;
   const hello = () => netSend({ t: 'hello' });
   const link = V.link = V.conn = makeLink(relayOf(code), tp.h, tp.g, {
@@ -1678,7 +1717,7 @@ function setSizeChoice(n) { V.size = n === 4 ? 4 : 2; $('plTwo').setAttribute('a
 $('plTwo').addEventListener('click', () => setSizeChoice(2));
 $('plFour').addEventListener('click', () => setSizeChoice(4));
 setSizeChoice(V.size);
-$('bStart').addEventListener('click', () => { if (V.role === 'host' && G.mode === 'wait') duelStartHost(); });
+$('bStart').addEventListener('click', () => { if (G.mode !== 'wait') return; if (V.role === 'host') duelStartHost(); else if (V.owner) netSend({ t: 'go' }); });
 $('bJoin').addEventListener('click', () => joinDuel($('joinCode').value));
 $('joinCode').addEventListener('keydown', ev => { ev.stopPropagation(); if (ev.key === 'Enter') joinDuel($('joinCode').value); });
 $('bAgain').addEventListener('click', () => {
@@ -2042,9 +2081,19 @@ let last = 0;
 function frame(now) {
   const dt = Math.min(.033, (now - last) / 1000 || 0); last = now;
   if (!G.paused) update(dt);
-  render(); updateHud();
+  if (!V.serve) { render(); updateHud(); }
   requestAnimationFrame(frame);
 }
+/* The studio server runs this same script without a screen and calls these two: one room, no player of its own. */
+window.IskraServeStart = (code, size, wide) => {
+  V.serve = true; V.role = 'host'; V.size = size === 4 ? 4 : 2; V.wide = !!wide; V.code = code; V.born = Date.now();
+  const tp = roomTopics(code);
+  const link = V.link = makeLink(RELAYS[0], tp.g, tp.h, { up() { hostWait(); V.me = -1; }, msg(d) { if (V.link === link) onData(d); }, down() { V.closed = true; } });
+};
+window.IskraRoomState = () => {
+  if (V.serve && G.mode === 'wait' && V.hs) for (let s = 0; s < 4; s++) if (V.ids[s] && Date.now() - (V.hs[s] || 0) > 6000) dropGuest(s);   // a waiting player says hello every second
+  return { mode: G.mode, n: guestCount(), closed: !!V.closed, age: Date.now() - (V.born || Date.now()) };
+};
 
 /* ---------- boot ---------- */
 (function grain() {
